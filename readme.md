@@ -1,0 +1,3 @@
+# RESOLVE-G3 (Gas in Galaxy Groups) Group Finding Algorithm and Catalogs
+
+Intro first paragraph...
