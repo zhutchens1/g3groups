@@ -32,9 +32,9 @@ With dwarf galaxies now associated to giant-only groups, we have a catalog of "g
 1. Assign all ungrouped dwarfs (following step 2: association) to N=1 "potential" groups.
 2. Use a k-d tree to identify pairs of nearest-neighbor potential groups (i.e., a pair of potential groups where each group is a NN to the other).
 3. For every nearest-neighbor pair, check if the pair should be merged into a single group:
-    a. Ccmpute the integrated r-band absolute magnitude of all member galaxies belonging to the pair.
-    b. Determine the ~98th percentile of individual galaxy projected radii and peculiar velociies, `r_proj` and `dv_proj`, observed in giant+dwarf groups (identified in step 2) of the same group-integrated luminosity.
-    c. If all individual galaxies shared between the nearest-neighbor of potential groups can fit within the boundaries `r_proj` and `dv_proj`, computed from the center of the two potential groups, then we merge them into a single group. Else, we leave them alone.
+ a. Ccmpute the integrated r-band absolute magnitude of all member galaxies belonging to the pair.
+ b. Determine the ~98th percentile of individual galaxy projected radii and peculiar velociies, `r_proj` and `dv_proj`, observed in giant+dwarf groups (identified in step 2) of the same group-integrated luminosity.
+ c. If all individual galaxies shared between the nearest-neighbor of potential groups can fit within the boundaries `r_proj` and `dv_proj`, computed from the center of the two potential groups, then we merge them into a single group. Else, we leave them alone.
 4. Repeat from (2) until the dwarf-only group catalog has converged, when the potential groups are no longer merging between interations.
 
 
