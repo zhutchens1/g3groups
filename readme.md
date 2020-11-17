@@ -7,20 +7,26 @@ Intro first paragraph...
 <details><summary>Click for details...</summary>
 
 </details>
+
 ## Finding Giant-Only Cores of Groups
 <details><summary>Click for details...</summary>
+
 Some details on this...
 
 
 </details>
+
 ## Associating Dwarf Galaxies to Giant-Only Groups
 <details><summary>Click for details...</summary>
+
 Some details on this...
 
 
 </details>
+
 ## Finding Dwarf-Only Groups
 <details><summary>Click for details...</summary>
+
 Some details on this...
 
 
