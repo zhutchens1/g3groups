@@ -11,7 +11,7 @@ Intro first paragraph...
 ## Step 1: Finding Giant-Only Cores of Groups
 <details><summary>Click for details...</summary>
 
-Some details on this...
+In the first step of the group finder, we use friends-of-friends to locate groups of giant galaxies. We define giants as galaxies that are  more massive than the gas-richness threshold scale from Kannappanet al. (2013). Therefore, in the stellar mass-selected group catalog, we select giants as logM* > 9.5; in the luminosity-selected group catalog, we select giants as r-mag <= -19.4. Figure 1 shows how this massscale divides the galaxy population between dwarfs and giantsluminosity-selected group catalog, we select giants as r-mag <= -19.4. Figure 1 shows how this massscale divides the galaxy population between dwarfs and giants..
 
 
 </details>
@@ -25,7 +25,7 @@ Some details on this...
 </details>
 
 ## Step 3: Finding Dwarf-Only Groups
-<details><summary>Click for details...</summary>
+<details>
 
 With dwarf galaxies now associated to giant-only groups, we have a catalog of "giant+dwarf" groups, and the remaining step in the group finder is to search for dwarf-only groups -- groups that would have been missed because they do not contain a giant galaxy to be associated with. We have written an algorithm called "iterative combination" to perform this step, which is contained in the `iterativecombination.py` file. This algorithm uses an iterative approach, trying to merge nearest-neighbor pairs of "potential groups" based on the sizes of similarly-luminous giant+dwarf groups. The steps of this algorithm are:
 
