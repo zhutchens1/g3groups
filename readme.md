@@ -29,10 +29,20 @@ At the end of step 1, we have a set of giant-only groups. All dwarfs have yet to
 </details>
 
 ## Step 2: Associating Dwarf Galaxies to Giant-Only Groups
-<details><summary>Click for details...</summary>
+<details>
 
-Some details on this...
+The next step is associate dwarf galaxies into the giant-only groups. To do so, we use the individual relative projected radii and peculiar velocities of giants to calibrate search boundaries for dwarfs. The figure below shows this calibration as a function of giant-only group N, allowing us to avoid halo mass estimates (which are problematic for high-z LADUMA work). An analagous calibration is done in velocity, but it is not shown here for brevity.
 
+[CAL PLOT]
+
+The fit to medians, binned by giant-only group N, of the projected radii and velocities are:
+
+<div align="center">
+R<sub>proj</sub><sup>fit</sup> = XXXN<sub>giants</sub> + YYY
+v<sub>proj</sub><sup>fit</sup> = XXXN<sub>giants</sub> + YYY
+</div>
+
+We find that optimal values for finding dwarfs was `3R_proj^fit` and `4.5v_proj^fit`
 
 </details>
 
