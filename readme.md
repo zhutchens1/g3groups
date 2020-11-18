@@ -9,7 +9,7 @@ Intro first paragraph...
 </details>
 
 ## Step 1: Finding Giant-Only Cores of Groups
-<details><summary>Click for details...</summary>
+<details>
 
 In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We define giants as galaxies that are  more massive than the gas-richness threshold scale from Kannappan et al. (2013). Therefore our selection criteria for giant-only FoF are:
 
@@ -18,20 +18,13 @@ In the first step of the group finder, we use friends-of-friends (FoF)  to locat
 * Stellar mass-selected ECO/RESOLVE-A: `log(Mstar)>=9.5`, `2530 < cz [km/s] < 7470`
 * Stellar mass-selected RESOLVE-B: `4250 < cz [km/s] < 7250`
 
-
-Therefore, in the stellar mass-selected group catalog, we select giants as `logMstar >= 9.5`; in the luminosity-selected group catalog, we select giants as absolute `M_r <= -19.4`. Figure 1 shows how this mass scale divides the galaxy population between dwarfs and giants.
-We also require that giant galaxies are confined to the group-finding volume, which surrounds the survey with a buffer region to mitigate errors in group-finding near the survey redshift boundaries. This constraint is `2530 < cz [km/s] < 7470` for ECO, which includes RESOLVE-A, and `4250 < cz [km/s] < 7250` for RESOLVE-B. 
+We employ an adaptive linking strategy during this giant-only FoF procedure, inspired by Robotham et al. (2011) and its volume-limited application in Mummery (2018). We use line-of-sight `b_LOS` and transverse `b_perp` linking multipliers of 1.1 and 0.07, respectively, as these are optimized for the study of galaxy environment (Duarte & Mamon, 2014). In a standard FoF approach, these values are multiplied by the mean separation of galaxies, `s_0=(V/N)^1/3`, and are used as linking lengths. Here we assign a different value of `s` to every galaxy, measured instead by the number density of galaxies which are greater than or equal to their luminosity or mass. We then look at the median value of `s` over all galaxies and scale all `s` values such that the median is retained at the original `(V/N)^1/3`. The figure below shows how the value of `s` varies with absolute magnitude. We apply these ECO `s` values to RESOLVE-B using a model fit, since the B semester volume is subject to cosmic variance. This approach ensures that the linking length rises with galaxy luminosity/stellar mass and therefore reduces fragmentation of identified groups.
 
 [FIGURE 1]
 
-We employ an adaptive linking strategy during this giant-only FoF procedure, inspired by Robotham et al. (2011) and its volume-limited application in Mummery (2018). We use line-of-sight `b_LOS` and transverse `b_perp` linking multipliers of 1.1 and 0.07, respectively, as these are optimized for the study of galaxy environment (Duarte & Mamon, 2014). In a standard FoF approach, these values are multiplied by the mean separation of galaxies, `s_0=(V/N)^1/3`, and are used as linking lengths. Here we assign a different value of `s` to every galaxy, measured instead by the number density of galaxies which are greater than or equal to their luminosity or mass. We then look at the median value of `s` over all galaxies and scale all `s` values such that the median is retained at the original `(V/N)^1/3`. The figure below shows how the value of `s` varies with absolute magnitude. We apply these ECO `s` values to RESOLVE-B using a model fit, since the B semester volume is subject to cosmic variance. This approach ensures that the linking length rises with galaxy luminosity/stellar mass and therefore reduces fragmentation of identified groups.
-
-[FIGURE 2]
-
+At the end of step 1, we have a set of giant-only groups. All dwarfs have yet to be tested for group membership. The figure below shows the multiplicity function for these giant-only groups, based on the luminosity-selected catalog.
  
-
-
-
+[FIGURE 2]
 
 </details>
 
