@@ -39,10 +39,11 @@ The fit to medians, binned by giant-only group N, of the projected radii and vel
 
 <div align="center">
 R<sub>proj</sub><sup>fit</sup> = XXXN<sub>giants</sub> + YYY
+
 v<sub>proj</sub><sup>fit</sup> = XXXN<sub>giants</sub> + YYY
 </div>
 
-We find that optimal values for finding dwarfs was `3R_proj^fit` and `4.5v_proj^fit`
+We find that optimal values for associating dwarfs are 3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup>. These scale factors raise the fit to the radii (or velocity boundaries) that would have encompassed nearly-all giant galaxies at a given giant-only group N.
 
 </details>
 
