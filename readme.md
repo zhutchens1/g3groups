@@ -11,7 +11,18 @@ Intro first paragraph...
 ## Step 1: Finding Giant-Only Cores of Groups
 <details><summary>Click for details...</summary>
 
-In the first step of the group finder, we use friends-of-friends to locate groups of giant galaxies. We define giants as galaxies that are  more massive than the gas-richness threshold scale from Kannappanet al. (2013). Therefore, in the stellar mass-selected group catalog, we select giants as logM* > 9.5; in the luminosity-selected group catalog, we select giants as r-mag <= -19.4. Figure 1 shows how this massscale divides the galaxy population between dwarfs and giantsluminosity-selected group catalog, we select giants as r-mag <= -19.4. Figure 1 shows how this massscale divides the galaxy population between dwarfs and giants..
+In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We define giants as galaxies that are  more massive than the gas-richness threshold scale from Kannappanet al. (2013). Therefore, in the stellar mass-selected group catalog, we select giants as `logMstar > 9.5`; in the luminosity-selected group catalog, we select giants as absolute `M_r <= -19.4`. Figure 1 shows how this masscale divides the galaxy population between dwarfs and giants.
+We also require that giant galaxies are confined to the survey volume, which includes a buffer region to mitigate errors in group-finding near the survey redshift boundaries. This constraint is `2530 < cz [km/s] < 7470` for ECO, which includes RESOLVE-A, and `4250 < cz [km/s] < 7250`. 
+
+[FIGURE 1]
+
+We employ an adaptive linking strategy during this giant-only FoF procedure, inspired by Robotham et al. (2011) and its volume-limited application in Mummery (2018). We use line-of-sight `b_LOS` and transverse `b_perp` linking multipliers of 1.1 and 0.07, respectively, as these are optimized for the study of galaxy environment (Duarte & Mamon, 2014). In a standard FoF approach, these values are multiplied by the mean separation of galaxies, `s_0=(V/N)^1/3`, and are used as linking lengths. Here we assign a different value of `s` to every galaxy, measured instead by the number density of galaxies which are greater than or equal to their luminosity or mass. We then look at the median value of `s` over all galaxies and scale all `s` values such that the median is retained at the original `(V/N)^1/3`. The figure below shows how the value of `s` varies with absolute magnitude.
+
+[FIGURE 2]
+
+ 
+
+
 
 
 </details>
@@ -35,7 +46,7 @@ With dwarf galaxies now associated to giant-only groups, we have a catalog of "g
   * a. Compute the integrated r-band absolute magnitude of all member galaxies belonging to the pair.
   * b. Determine the ~98th percentile of individual galaxy projected radii and peculiar velociies, `r_proj` and `dv_proj`, observed in giant+dwarf groups (identified in step 2) of the same group-integrated luminosity.
   * c. If all individual galaxies shared between the nearest-neighbor of potential groups can fit within the boundaries `r_proj` and `dv_proj`, computed from the center of the two potential groups, then we merge them into a single group. Else, we leave them alone.
- 4. Repeat from (ii) until the dwarf-only group catalog has converged, when the potential groups are no longer merging between interations.
+ 4. Repeat from (2) until the dwarf-only group catalog has converged, when the potential groups are no longer merging between interations.
 
 
 
