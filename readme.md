@@ -11,7 +11,17 @@ Intro first paragraph...
 ## Step 1: Finding Giant-Only Cores of Groups
 <details><summary>Click for details...</summary>
 
-In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We define giants as galaxies that are  more massive than the gas-richness threshold scale from Kannappan et al. (2013). Therefore, in the stellar mass-selected group catalog, we select giants as `logMstar >= 9.5`; in the luminosity-selected group catalog, we select giants as absolute `M_r <= -19.4`. Figure 1 shows how this mass scale divides the galaxy population between dwarfs and giants.
+In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We define giants as galaxies that are  more massive than the gas-richness threshold scale from Kannappan et al. (2013). Therefore our selection criteria for giant-only FoF are:
+
++-----------------------+----------------------------------------------+---------------------------------------------+
+|                       | ECO/RESOLVE-A                                | RESOLVE-B                                   |
++-----------------------+----------------------------------------------+---------------------------------------------+
+| Luminosity-selected   | `M_r<=-19.4`, `2530 < cz [km/s] < 7470`      | `M_r<=-19.4`, `4250 < cz [km/s] < 7250`     |
++-----------------------+----------------------------------------------+---------------------------------------------+
+| Stellar mass-selected | `log(Mstar)>=9.5`, `2530 < cz [km/s] < 7470` | `log(Mstar)>=9.5`,`4250 < cz [km/s] < 7250` |
++-----------------------+----------------------------------------------+---------------------------------------------+
+
+Therefore, in the stellar mass-selected group catalog, we select giants as `logMstar >= 9.5`; in the luminosity-selected group catalog, we select giants as absolute `M_r <= -19.4`. Figure 1 shows how this mass scale divides the galaxy population between dwarfs and giants.
 We also require that giant galaxies are confined to the group-finding volume, which surrounds the survey with a buffer region to mitigate errors in group-finding near the survey redshift boundaries. This constraint is `2530 < cz [km/s] < 7470` for ECO, which includes RESOLVE-A, and `4250 < cz [km/s] < 7250` for RESOLVE-B. 
 
 [FIGURE 1]
