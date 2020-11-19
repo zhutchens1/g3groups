@@ -20,11 +20,11 @@ In the first step of the group finder, we use friends-of-friends (FoF)  to locat
 
 We employ an adaptive linking strategy during this giant-only FoF procedure, inspired by Robotham et al. (2011) and its volume-limited application in Mummery (2018). We use line-of-sight `b_LOS` and transverse `b_perp` linking multipliers of 1.1 and 0.07, respectively, as these are optimized for the study of galaxy environment (Duarte & Mamon, 2014). In a standard FoF approach, these values are multiplied by the mean separation of galaxies, `s_0=(V/N)^1/3`, and are used as linking lengths. Here we assign a different value of `s` to every galaxy, measured instead by the number density of galaxies which are greater than or equal to their luminosity or mass. We then look at the median value of `s` over all galaxies and scale all `s` values such that the median is retained at the original `(V/N)^1/3`. The figure below shows how the value of `s` varies with absolute magnitude. We apply these ECO `s` values to RESOLVE-B using a model fit, since the B semester volume is subject to cosmic variance. This approach ensures that the linking length rises with galaxy luminosity/stellar mass and therefore reduces fragmentation of identified groups.
 
-![Separation for Giant Galaxies in FoF](meansep_M_r_plot.jpg)
+![Separation for Giant Galaxies in FoF](images/meansep_M_r_plot.jpg)
 
 At the end of step 1, we have a set of giant-only groups. All dwarfs have yet to be tested for group membership. The figure below shows the multiplicity function for these giant-only groups, based on the luminosity-selected catalog.
 
-![Mult Function for Giant-Only Groups](giantonlymult.jpg) 
+![Mult Function for Giant-Only Groups](images/giantonlymult.jpg) 
 
 </details>
 
@@ -34,7 +34,7 @@ At the end of step 1, we have a set of giant-only groups. All dwarfs have yet to
 The next step is associate dwarf galaxies into the giant-only groups. To do so, we use the individual relative projected radii and peculiar velocities of giants to calibrate search boundaries for dwarfs. The figure below shows this calibration as a function of giant-only group N, allowing us to avoid halo mass estimates (which are problematic for high-z LADUMA work). An analagous calibration is done in velocity, but it is not shown here for brevity.
 
 
-![Group boundary calibration](rproj_calibration_assoc.jpg)
+![Group boundary calibration](images/rproj_calibration_assoc.jpg)
 
 The fit to medians, binned by giant-only group N, of the projected radii and velocities are:
 
@@ -46,7 +46,7 @@ v<sub>proj</sub><sup>fit</sup> = 7.558N<sub>giants</sub> + 40.060 [km/s]
 
 We find that optimal values for associating dwarfs are 3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup>. These scale factors raise the fit to the radii (or velocity boundaries) that would have enclosed nearly-all giant galaxies at a given giant-only group N. Therefore, we associate dwarf galaxies to the giant-only groups within these boundaries. A cartoon diagram is shown below to illustrate this concept, as well as the multiplicity function for groups containing giants and dwarfs.
 
-![Cartoon of association](assocdiagram2.jpg)
+![Cartoon of association](images/assocdiagram2.jpg)
 
 
 </details>
