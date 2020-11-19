@@ -33,17 +33,21 @@ At the end of step 1, we have a set of giant-only groups. All dwarfs have yet to
 
 The next step is associate dwarf galaxies into the giant-only groups. To do so, we use the individual relative projected radii and peculiar velocities of giants to calibrate search boundaries for dwarfs. The figure below shows this calibration as a function of giant-only group N, allowing us to avoid halo mass estimates (which are problematic for high-z LADUMA work). An analagous calibration is done in velocity, but it is not shown here for brevity.
 
-[CAL PLOT]
+
+![Group boundary calibration](rproj_calibration_assoc.jpg)
 
 The fit to medians, binned by giant-only group N, of the projected radii and velocities are:
 
 <div align="center">
-R<sub>proj</sub><sup>fit</sup> = XXXN<sub>giants</sub> + YYY
+R<sub>proj</sub><sup>fit</sup> = 0.0177N<sub>giants</sub> + 0.0546 [Mpc/h]
 
-v<sub>proj</sub><sup>fit</sup> = XXXN<sub>giants</sub> + YYY
+v<sub>proj</sub><sup>fit</sup> = 7.558N<sub>giants</sub> + 40.060 [km/s]
 </div>
 
-We find that optimal values for associating dwarfs are 3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup>. These scale factors raise the fit to the radii (or velocity boundaries) that would have encompassed nearly-all giant galaxies at a given giant-only group N.
+We find that optimal values for associating dwarfs are 3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup>. These scale factors raise the fit to the radii (or velocity boundaries) that would have enclosed nearly-all giant galaxies at a given giant-only group N. Therefore, we associate dwarf galaxies to the giant-only groups within these boundaries. A cartoon diagram is shown below to illustrate this concept, as well as the multiplicity function for groups containing giants and dwarfs.
+
+![Cartoon of association](assocdiagram2.jpg)
+
 
 </details>
 
@@ -56,7 +60,7 @@ With dwarf galaxies now associated to giant-only groups, we have a catalog of "g
  2. Use a k-d tree to identify pairs of nearest-neighbor potential groups (i.e., a pair of potential groups where each group is a NN to the other).
  3. For every nearest-neighbor pair, check if the pair should be merged into a single group:
   * a. Compute the integrated r-band absolute magnitude of all member galaxies belonging to the pair.
-  * b. Determine the ~98th percentile of individual galaxy projected radii and peculiar velociies, `r_proj` and `dv_proj`, observed in giant+dwarf groups (identified in step 2) of the same group-integrated luminosity.
+  * b. Determine the ~98th percentile of individual galaxy projected radii and peculiar velocities, `r_proj` and `dv_proj`, observed in giant+dwarf groups (identified in step 2) of the same group-integrated luminosity.
   * c. If all individual galaxies shared between the nearest-neighbor of potential groups can fit within the boundaries `r_proj` and `dv_proj`, computed from the center of the two potential groups, then we merge them into a single group. Else, we leave them alone.
  4. Repeat from (2) until the dwarf-only group catalog has converged, when the potential groups are no longer merging between interations.
 
