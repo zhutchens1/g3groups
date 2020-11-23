@@ -73,7 +73,7 @@ With dwarf galaxies now associated to giant-only groups, we have a catalog of "g
 
 Now that groups are identified, we assign halo masses based on group-integrated luminosity or stellar mass, using the method described in Eckert et al. (2016). The results of abundance matching are shown in the figure below. To assign halo masses for RESOLVE-B, we performed abundance matching on a RESOLVE-B analog version ECO which extends down to the deeper completeness floor of RESOLVE-B, and then interpolated a cubic spline from that result.
 
-![HAM Result](images/hamLrrelation.jpeg) 
+<img src="images/hamLrrelation.jpeg"/>
 
 
 </details>
