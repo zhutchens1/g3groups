@@ -80,7 +80,7 @@ With dwarf galaxies now associated to giant-only groups, we have a catalog of "g
 
 After iterative combination has finished, we have a complete set of groups. The multiplicity function for luminosity-selected groups in ECO and RESOLVE-B is shown below.
 
-<img src="multfunctionwdwarfs.png"/>
+<img src="images/multfunctionwdwarfs.png"/>
 
 </details>
 
