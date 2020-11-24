@@ -4,7 +4,13 @@ Intro first paragraph...
 
 
 ## Using the Group Catalogs
-<details><summary>Click for details...</summary>
+<details>
+
+Catalogs are provided for each group-finding selection: the luminosity-selected group catalog, the stellar mass-selected group catalog, and the baryonic mass-selected catalog. 
+In addition to the names of variables standard in the RESOLVE and ECO databases, the following columns describe the new groups included in the catalogs:
+
+* `g3grp`: group ID number of galaxy following the group idenitification procedure described below.
+* `g3grpn`: number of total members in the gro
 
 </details>
 
@@ -71,7 +77,7 @@ With dwarf galaxies now associated to giant-only groups, we have a catalog of "g
 ## Step 4: Halo Mass Assignment
 <details>
 
-Now that groups are identified, we assign halo masses based on group-integrated luminosity or stellar mass, using the method described in Eckert et al. (2016). The results of abundance matching are shown in the figure below. To assign halo masses for RESOLVE-B, we performed abundance matching on a RESOLVE-B analog version ECO which extends down to the deeper completeness floor of RESOLVE-B, and then interpolated a cubic spline from that result.
+Now that groups are identified, we assign halo masses based on group-integrated luminosity or stellar mass, using the method described in Eckert et al. (2016). The results of abundance matching are shown in the figure below. To assign halo masses for RESOLVE-B, we performed abundance matching on a RESOLVE-B analog version ECO which extends down to the deeper completeness floor of RESOLVE-B, and then interpolated from that result.
 
 <img src="images/hamLrrelation.jpeg"/>
 
