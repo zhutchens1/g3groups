@@ -56,7 +56,7 @@ R<sub>proj</sub><sup>fit</sup> = 0.0177N<sub>giants</sub> + 0.0546 [Mpc/h]
 v<sub>proj</sub><sup>fit</sup> = 7.558N<sub>giants</sub> + 40.060 [km/s]
 </div>
 
-We find that optimal values for associating dwarfs are 3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup>. These scale factors raise the fit to the radii (or velocity boundaries) that would have enclosed nearly-all giant galaxies at a given giant-only group N. Therefore, we associate dwarf galaxies to the giant-only groups within these boundaries. A cartoon diagram is shown below to illustrate this concept, as well as the multiplicity function for groups containing giants and dwarfs.
+We find that optimal values for associating dwarfs are 3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup>. These scale factors raise the fit to the radii (or velocity boundaries) that would have enclosed nearly-all giant galaxies at a given giant-only group N. Therefore, we associate dwarf galaxies to the giant-only groups within these boundaries. A cartoon diagram is shown below to illustrate this concept.
 
 <img src="images/assocdiagram2.jpeg" width="500" align='center'/>
 
@@ -67,14 +67,14 @@ We find that optimal values for associating dwarfs are 3R<sub>proj</sub><sup>fit
 ## Step 3: Finding Dwarf-Only Groups
 <details>
 
-With dwarf galaxies now associated to giant-only groups, we have a catalog of "giant+dwarf" groups, and the remaining step in the group finder is to search for dwarf-only groups -- groups that would have been missed because they do not contain a giant galaxy to be associated with. We have written an algorithm called "iterative combination" to perform this step, which is contained in the `iterativecombination.py` file. This algorithm uses an iterative approach, trying to merge nearest-neighbor pairs of "potential groups" based on the sizes of similarly-luminous giant+dwarf groups. The steps of this algorithm are:
+With dwarf galaxies now associated to giant-only groups, we have a catalog of "giant+dwarf" groups, and the remaining step in the group finder is to search for dwarf-only groups -- groups that would have been missed because they do not contain a giant galaxy to be associated with. We have written an algorithm called "iterative combination" to perform this step. This algorithm uses an iterative approach, trying to merge nearest-neighbor pairs of "potential groups" based on the sizes of similarly-luminous giant+dwarf groups. The steps of this algorithm are:
 
  1. Assign all ungrouped dwarfs (following step 2: association) to N=1 "potential" groups.
- 2. Use a k-d tree to identify pairs of nearest-neighbor potential groups (i.e., a pair of potential groups where each group is a NN to the other).
+ 2. Use a k-d tree to identify pairs of nearest-neighbor potential groups.
  3. For every nearest-neighbor pair, check if the pair should be merged into a single group:
-  * a. Compute the integrated r-band absolute magnitude of all member galaxies belonging to the pair.
-  * b. Determine the ~98th percentile of individual galaxy projected radii and peculiar velocities, `r_proj` and `dv_proj`, observed in giant+dwarf groups (identified in step 2) of the same group-integrated luminosity.
-  * c. If all individual galaxies shared between the nearest-neighbor of potential groups can fit within the boundaries `r_proj` and `dv_proj`, computed from the center of the two potential groups, then we merge them into a single group. Else, we leave them alone.
+  3.1 Compute the integrated r-band absolute magnitude of all member galaxies belonging to the pair. 
+  3.2 Compute 98th percentile of relative projected radii and relative velocties of galaxies belonging to giant+dwarf groups of similar integrated luminosity or mass. 
+  3.3 If all individual galaxies shared between the two potential groups can fit within those radii/velocities, we merge them together into a single group.
  4. Repeat from (2) until the dwarf-only group catalog has converged, when the potential groups are no longer merging between interations.
 
 
