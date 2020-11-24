@@ -10,7 +10,13 @@ Catalogs are provided for each group-finding selection: the luminosity-selected 
 In addition to the names of variables standard in the RESOLVE and ECO databases, the following columns describe the new groups included in the catalogs:
 
 * `g3grp`: group ID number of galaxy following the group idenitification procedure described below.
-* `g3grpn`: number of total members in the gro
+* `g3grpn`: number of total members in the galaxy group
+* `g3grpradeg`: right-ascension of group center in decimal degrees
+* `g3grpdedeg`: declination of group center in decimal degrees
+* `g3grpcz`: Local Group-corrected velocity of group center in km/s
+* `g3grpmag`: group-integrated r-band magnitude 
+* `g3grplogmstar`: group-integrated logarithmic stellar mass
+* `g3logmh`: abundance-matched log halo mass assuming h=0.7
 
 </details>
 
@@ -74,7 +80,7 @@ With dwarf galaxies now associated to giant-only groups, we have a catalog of "g
 
 </details>
 
-## Step 4: Halo Mass Assignment
+## Step 4: Assigning Halo Masses
 <details>
 
 Now that groups are identified, we assign halo masses based on group-integrated luminosity or stellar mass, using the method described in Eckert et al. (2016). The results of abundance matching are shown in the figure below. To assign halo masses for RESOLVE-B, we performed abundance matching on a RESOLVE-B analog version ECO which extends down to the deeper completeness floor of RESOLVE-B, and then interpolated from that result.
