@@ -1,6 +1,6 @@
 # RESOLVE-G3 (Gas in Galaxy Groups) Group Finding Algorithm and Catalogs
 
-Intro first paragraph...
+This github repository houses the codes and group catalogs for the new RESOLVE-G3 (Gas in Galaxy Groups) team. The subsections below describe the catalog information and the algorithmused to identify groups for RESOLVE-G3.
 
 
 ## Using the Group Catalogs
@@ -15,7 +15,7 @@ In addition to the names of variables standard in the RESOLVE and ECO databases,
 * `g3grpdedeg`: declination of group center in decimal degrees
 * `g3grpcz`: Local Group-corrected velocity of group center in km/s
 * `g3grpmag`: group-integrated r-band magnitude 
-* `g3grplogmstar`: group-integrated logarithmic stellar mass
+* `g3grplogmstar`: group-integrated log stellar mass
 * `g3logmh`: abundance-matched log halo mass assuming h=0.7
 
 </details>
