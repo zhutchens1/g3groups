@@ -29,11 +29,11 @@ def iterative_combination(galaxyra, galaxydec, galaxycz, galaxymag, rprojboundar
     galaxycz : iterable
        Redshift velocity (corrected for Local Group motion) of input galaxies in km/s.
     galaxymag : iterable
-       M_r absolute magnitudes of input galaxies.
+       M_r absolute magnitudes of input galaxies, or galaxy stellar/baryonic masses (the code will be able to differentiate.)
     rprojboundary : callable
        Search boundary to apply in projection on the sky for grouping input galaxies, function of group-integrated M_r, in units Mpc/h.
     vprojboundary : callable
-       Search boundary to apply in velocity  on the sky for grouping input galaxies, function of group-integrated M_r, in units km/s.
+       Search boundary to apply in velocity  on the sky for grouping input galaxies, function of group-integrated M_r or mass, in units km/s.
     centermethod : str
         'arithmetic' or 'luminosity'. Specifies how to propose group centers during the combination process.
     starting_id : int, default 1
@@ -151,7 +151,8 @@ def nearest_neighbor_assign(galaxyra, galaxydec, galaxycz, galaxymag, grpid, rpr
     galaxyra, galaxydec, galaxycz : iterable
         Input coordinates of galaxies (RA/Dec in decimal degrees, cz in km/s)
     galaxymag : iterable
-        M_r magnitudes of input galaxies.
+        M_r magnitudes or stellar/baryonic masses of input galaxies. (note code refers to 'mags' throughout, but
+        underlying `fit_in_group` function will distinguish the two.)
     grpid : iterable
         Group ID number for every input galaxy, at current iteration (potential group).
     rprojboundary, vprojboundary : callable
@@ -219,9 +220,9 @@ def fit_in_group(galra, galdec, galcz, galmag, rprojboundary, vprojboundary, cen
     galra, galdec, galcz : iterable
         Coordinates of input galaxies -- all galaxies belonging to the pair of groups that are being assessed. 
     galmag : iterable
-        M_r absolute magnitudes of all input galaxies.
+        M_r absolute magnitudes of all input galaxies, or galaxy stellar masses - the function can distinguish the two.
     rprojboundary, vprojboundary : callable
-        Limiting projected- and velocity-space group sizes as function of group-integrated luminosity.
+        Limiting projected- and velocity-space group sizes as function of group-integrated luminosity or stellar mass.
     center : str
         Specifies method of computing proposed center. Options: 'arithmetic' or 'luminosity'. The latter is a weighted-mean positioning based on M_r (like center of mass).
 
@@ -230,7 +231,10 @@ def fit_in_group(galra, galdec, galcz, galmag, rprojboundary, vprojboundary, cen
     fitingroup : bool
         Bool indicating whether the series of input galaxies can be merged into a single group of the specified size.
     """
-    memberintmag = get_int_mag(galmag, np.full(len(galmag), 1))
+    if (galmag<0).all():
+        memberintmag = get_int_mag(galmag, np.full(len(galmag), 1))
+    elif (galmag>0).all():
+        memberintmag = get_int_mass(galmag, np.full(len(galmag), 1))
     grpn = len(galra)
     galphi = galra*np.pi/180.
     galtheta = np.pi/2. - galdec*np.pi/180.
@@ -338,7 +342,33 @@ def get_int_mag(galmags, grpid):
     return grpmags
 
 
+def get_int_mass(galmass, grpid):
+    """
+    Given a list of galaxy stellar or baryonic masses and group ID numbers,
+    compute the group-integrated stellar or baryonic mass, galaxy-wise.
+    
+    Parameters
+    ---------------
+    galmass : iterable
+        List of galaxy log(mass).
+    grpid : iterable
+        List of group ID numbers for every galaxy.
 
+
+    Returns
+    ---------------
+    grpmstar : np.array
+         Array containing group-integrated stellar masses for each galaxy; length matches `galmstar`.
+    """
+    galmass=np.asarray(galmass)
+    grpid=np.asarray(grpid)
+    grpmass = np.zeros(len(galmass))
+    uniqgrpid=np.unique(grpid)
+    for uid in uniqgrpid:
+        sel=np.where(grpid==uid)
+        totalmass = np.log10(np.sum(10**galmass[sel]))
+        grpmass[sel]=totalmass
+    return grpmass
 
 def lumHAMwrapper(galra, galdec, galcz, galmag, galgrpid, volume,  inputfilename=None, outputfilename=None):
     """
@@ -349,7 +379,8 @@ def lumHAMwrapper(galra, galdec, galcz, galmag, galgrpid, volume,  inputfilename
     galra, galdec, galcz : iterable
         Input coordinates of galaxies (in decimal degrees, and km/s).
     galmag : iterable
-        Group-integrated r-band magnitudes by which to match halo abundances. 
+        Input r-band absolute magnitudes of galaxies, or their stellar or baryonic masses. The code
+        will distinguish between mags/masses, albeit variables in the code refer to 'mag' throughout.
     galgrpid : iterable
         Group ID number for every input galaxy.
         value to true if matching abundance on mass (like group-int stellar mass), for which the values are >0.
@@ -365,7 +396,7 @@ def lumHAMwrapper(galra, galdec, galcz, galmag, galgrpid, volume,  inputfilename
     haloid : np.float64 array
         ID of abundance-matched halos (matches number of unique values in `galgrpid`).
     halologmass : np.float64 array
-        Log(halo mass) of each halo, length matches `haloid`.
+        Log(halo mass per h) of each halo, length matches `haloid`.
     halorvir : np.float64 array
          Virial radii of each halo.
     halosigma : np.float64 array
@@ -375,7 +406,10 @@ def lumHAMwrapper(galra, galdec, galcz, galmag, galgrpid, volume,  inputfilename
     delinfile=(inputfilename==None)
     # Prepare inputs
     grpra, grpdec, grpcz = group_skycoords(galra, galdec, galcz, galgrpid)
-    grpmag = get_int_mag(galmag, galgrpid)
+    if (galmag<0).all():
+        grpmag = get_int_mag(galmag, galgrpid)
+    elif (galmag>0).all():
+        grpmag = -1*get_int_mass(galmag, galgrpid) # need -1 to trick Andreas' HAM code into using masses.
     grprproj, grpsigma = get_rproj_czdisp(galra, galdec, galcz, galgrpid)
     # Reshape them to match len grps
     uniqgrpid, uniqind = np.unique(galgrpid, return_index=True)
@@ -410,7 +444,6 @@ def lumHAMwrapper(galra, galdec, galcz, galmag, galgrpid, volume,  inputfilename
     halosigma = np.float64(hamfile[:,3])
     if deloutfile: os.remove(outputfilename)
     if delinfile: os.remove(inputfilename)
-    sel=np.where(halologmass>13.5)
     return haloid, halologmass, halorvir, halosigma
 
 def get_rproj_czdisp(galaxyra, galaxydec, galaxycz, galaxygrpid):
