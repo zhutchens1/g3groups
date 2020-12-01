@@ -30,8 +30,11 @@ import iterativecombination as ic
 from smoothedbootstrap import smoothedbootstrap as sbs
 import pdb
 
+def sqrtmodel(x, a, b):
+    return a*np.sqrt(b*x)
+
 def decayexp(x, a, b, c, d):
-    return np.abs(a)*np.exp(-1*np.abs(b)*x + c) + d
+    return np.abs(a)*np.exp(-1*np.abs(b)*x + c)
 
 if __name__=='__main__':
     ####################################
@@ -142,23 +145,26 @@ if __name__=='__main__':
     median_relprojdist = np.array([np.median(relprojdist[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
     median_relvel = np.array([np.median(relvel[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
 
-    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 100000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
-    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 100000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
 
-    rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, w=1/uniqecogiantgrpn[keepcalsel], deg=1)
-    dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, w=1/uniqecogiantgrpn[keepcalsel], deg=1)
-    print(rprojslope, rprojint)
-    print(dvprojslope, dvprojint)
-    rproj_boundary = lambda N: 3*(rprojslope*N+rprojint)
-    vproj_boundary = lambda N: 4.5*(dvprojslope*N+dvprojint)
+    #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
+    #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
+    poptrproj, jk = curve_fit(sqrtmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error)
+    poptdvproj,jk = curve_fit(sqrtmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error) 
+    rproj_boundary = lambda N: 3*sqrtmodel(N, *poptrproj) #3*(rprojslope*N+rprojint)
+    vproj_boundary = lambda N: 4.5*sqrtmodel(N, *poptdvproj) #4.5*(dvprojslope*N+dvprojint)
+    print("--- best fit parameters for dwarf assoc ----")
+    print(poptrproj)
+    print(poptdvproj)
 
     plt.figure()
     sel = (ecogiantgrpn>1)
     plt.plot(ecogiantgrpn[sel], relvel[sel], 'r.', alpha=0.2, label='ECO Giant Galaxies')
     plt.errorbar(uniqecogiantgrpn[keepcalsel], median_relvel, fmt='k^', label=r'$\Delta v_{\rm proj}$ (Median of $\Delta v_{\rm proj,\, gal}$)',yerr=dvproj_median_error)
-    tx = np.linspace(0,max(ecogiantgrpn),10)
-    plt.plot(tx, (dvprojslope*tx+dvprojint), label=r'$1\Delta v_{\rm proj}^{\rm fit}$')
-    plt.plot(tx, 4.5*(dvprojslope*tx+dvprojint), 'g',  label=r'$4.5\Delta v_{\rm proj}^{\rm fit}$', linestyle='-.')
+    tx = np.linspace(0,max(ecogiantgrpn),1000)
+    plt.plot(tx, sqrtmodel(tx, *poptdvproj), label=r'$1\Delta v_{\rm proj}^{\rm fit}$')
+    plt.plot(tx, 4.5*sqrtmodel(tx, *poptdvproj), 'g',  label=r'$4.5\Delta v_{\rm proj}^{\rm fit}$', linestyle='-.')
     plt.xlabel("Number of Giant Members")
     plt.ylabel("Relative Velocity to Group Center [km/s]")
     plt.legend(loc='best')
@@ -167,8 +173,8 @@ if __name__=='__main__':
     plt.clf()
     plt.plot(ecogiantgrpn[sel], relprojdist[sel], 'r.', alpha=0.2, label='ECO Giant Galaxies')
     plt.errorbar(uniqecogiantgrpn[keepcalsel], median_relprojdist, fmt='k^', label=r'$R_{\rm proj}$ (Median of $R_{\rm proj,\, gal}$)',yerr=rproj_median_error)
-    plt.plot(tx, (rprojslope*tx+rprojint), label=r'$1R_{\rm proj}^{\rm fit}$')
-    plt.plot(tx, 3*(rprojslope*tx+rprojint), 'g', label=r'$3R_{\rm proj}^{\rm fit}$', linestyle='-.')
+    plt.plot(tx, sqrtmodel(tx, *poptrproj), label=r'$1R_{\rm proj}^{\rm fit}$')
+    plt.plot(tx, 3*sqrtmodel(tx, *poptrproj), 'g', label=r'$3R_{\rm proj}^{\rm fit}$', linestyle='-.')
     plt.xlabel("Number of Giant Members in Galaxy's Group")
     plt.ylabel("Projected Distance from Giant to Group Center [Mpc/h]")
     plt.legend(loc='best')
@@ -216,6 +222,7 @@ if __name__=='__main__':
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmag>-24))
     gdmedianrproj, magbinedges, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], lambda x:np.percentile(x,99), bins=magbins)
     gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelvel[binsel], lambda x: np.percentile(x,99), bins=magbins)
+    print(magbinedges[:-1], gdmedianrproj, gdmedianrelvel)
     poptr, pcovr = curve_fit(decayexp, magbinedges[:-1], gdmedianrproj)
     poptv, pcovv = curve_fit(decayexp, magbinedges[:-1], gdmedianrelvel) 
 
@@ -346,7 +353,7 @@ if __name__=='__main__':
  
     # ---- for ECO ----- #
     ecohamsel = (ecog3grp!=-99.)
-    haloid, halomass, junk, junk = ic.lumHAMwrapper(ecoradeg[ecohamsel], ecodedeg[ecohamsel], ecocz[ecohamsel], ecoabsrmag[ecohamsel], ecog3grp[ecohamsel],\
+    haloid, halomass, junk, junk = ic.HAMwrapper(ecoradeg[ecohamsel], ecodedeg[ecohamsel], ecocz[ecohamsel], ecoabsrmag[ecohamsel], ecog3grp[ecohamsel],\
                                                      ecovolume, inputfilename=None, outputfilename=None)
     junk, uniqindex = np.unique(ecog3grp[ecohamsel], return_index=True)
     halomass = halomass-np.log10(0.7)
