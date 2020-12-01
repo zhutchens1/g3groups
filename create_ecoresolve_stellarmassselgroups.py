@@ -1,7 +1,7 @@
 """
 Zackary Hutchens - November 2020
 
-This program creates luminosity-selected  group catalogs for ECO/RESOLVE-G3 using the new algorithm, described in the readme markdown.
+This program creates stellar mass-selected  group catalogs for ECO/RESOLVE-G3 using the new algorithm, described in the readme markdown.
 
 The outline of this code is:
 (1) Read in observational data from RESOLVE-B and ECO (the latter includes RESOLVE-A).
@@ -13,7 +13,7 @@ The outline of this code is:
     (d) Perform giant-only FoF for RESOLVE-B, by interpolating the fit to obtain separations for RESOLVE-B. 
 (4) From giant-only groups, fit model for individual giant projected radii and peculiar velocites, to use for association.
 (5) Associate dwarf galaxies to giant-only FoF groups for ECO and RESOLVE-B (note different selection floors for dwarfs).
-(6) Based on giant+dwarf groups, calibrate boundaries (as function of giant+dwarf integrated luminosity) for iterative combination
+(6) Based on giant+dwarf groups, calibrate boundaries (as function of giant+dwarf integrated stellar mass) for iterative combination
 (7) Iterative combination on remaining ungrouped dwarf galaxies
 (8) halo mass assignment
 (9) Finalize arrays + output
@@ -386,7 +386,7 @@ if __name__=='__main__':
     plt.show()
 
     ########################################
-    # (9) Output arrays     
+    # Step 9: Output arrays     
     ########################################
     # ---- first get the quantities for ECO ---- #
     #eco_in_gf = np.where(ecog3grp!=-99.)
