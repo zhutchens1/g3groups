@@ -370,7 +370,7 @@ def get_int_mass(galmass, grpid):
         grpmass[sel]=totalmass
     return grpmass
 
-def lumHAMwrapper(galra, galdec, galcz, galmag, galgrpid, volume,  inputfilename=None, outputfilename=None):
+def HAMwrapper(galra, galdec, galcz, galmag, galgrpid, volume,  inputfilename=None, outputfilename=None):
     """
     Perform halo abundance matching on a galaxy group catalog (wrapper around the C code of A.A. Berlind).
 
