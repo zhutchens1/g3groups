@@ -48,15 +48,7 @@ The next step is associate dwarf galaxies into the giant-only groups. To do so, 
 
 ![Group boundary calibration](images/rproj_calibration_assoc.jpg)
 
-The fit to medians, binned by giant-only group N, of the projected radii and velocities are:
-
-<div align="center">
-R<sub>proj</sub><sup>fit</sup> = 0.0177N<sub>giants</sub> + 0.0546 [Mpc/h]
-
-v<sub>proj</sub><sup>fit</sup> = 7.558N<sub>giants</sub> + 40.060 [km/s]
-</div>
-
-We find that optimal values for associating dwarfs are 3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup>. These scale factors raise the fit to the radii (or velocity boundaries) that would have enclosed nearly-all giant galaxies at a given giant-only group N. Therefore, we associate dwarf galaxies to the giant-only groups within these boundaries. A cartoon diagram is shown below to illustrate this concept.
+The fit to medians, binned by giant-only group N, of the projected radii and velocities are shown in the blue line. The green dash-dotted line shows the optimal radii for associating dwarf galaxies, 3R<sub>proj</sub><sup>fit</sup> (or 4.5v<sub>proj</sub><sup>fit</sup> in velocity), because it is the radius that would enclose nearly-all giant galaxies if their groups were stacked at fixed N. Therefore, if a dwarf galaxy fills within  3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup> of a giant-only FoF group, we associate the dwarf as a group member. The cartoon below illustrates this concept. 
 
 <img src="images/assocdiagram2.jpeg" width="500" align='center'/>
 
