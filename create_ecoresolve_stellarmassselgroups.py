@@ -31,8 +31,7 @@ from smoothedbootstrap import smoothedbootstrap as sbs
 import pdb
 from sys import exit
 
-def decayexp(x, a, b, c, d):
-    #return a*(x**3) + b*(x**2) + c*x + d
+def grexp(x, a, b, c, d):
     return np.abs(a)*np.exp(np.abs(b)*x + c)+np.abs(d) 
 
 def sqrtmodel(x, a, b):
@@ -129,7 +128,7 @@ if __name__=='__main__':
     plt.ylabel("Number of Giant-Only FoF Groups")
     plt.yscale('log')
     plt.legend(loc='best')
-    #plt.xlim(0,80)
+    plt.xlim(0,80)
     plt.savefig("images/giantonlymult.jpg")
     plt.show()
     
@@ -235,15 +234,15 @@ if __name__=='__main__':
     gdmedianrproj = gdmedianrproj[~nansel]
     gdmedianrelvel = gdmedianrelvel[~nansel]
     print(massbinedges, gdmedianrproj)
-    poptr, pcovr = curve_fit(decayexp, massbinedges, gdmedianrproj, maxfev=2000, p0=[100,5,-14,0])
-    poptv, pcovv = curve_fit(decayexp, massbinedges, gdmedianrelvel, maxfev=2000, p0=[1000,5,-14,0])
+    poptr, pcovr = curve_fit(grexp, massbinedges, gdmedianrproj, maxfev=2000, p0=[100,5,-14,0])
+    poptv, pcovv = curve_fit(grexp, massbinedges, gdmedianrelvel, maxfev=2000, p0=[1000,5,-14,0])
     print('------')
     print(poptv) 
     tx = np.linspace(8.7,13.2,100)
     plt.figure()
     plt.plot(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
     plt.plot(massbinedges, gdmedianrproj, 'r^', label='99th percentile in bin')
-    plt.plot(tx, decayexp(tx,*poptr))
+    plt.plot(tx, grexp(tx,*poptr))
     plt.xlabel(r"Integrated M* of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
@@ -255,13 +254,13 @@ if __name__=='__main__':
     plt.figure()
     plt.plot(ecogdtotalmass[binsel], ecogdrelvel[binsel], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
     plt.plot(massbinedges, gdmedianrelvel,'r^',label='Medians')
-    plt.plot(tx, decayexp(tx,*poptv))
+    plt.plot(tx, grexp(tx,*poptv))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated M* of Giant + Dwarf Members")
     plt.show()
 
-    rproj_for_iteration = lambda M: decayexp(M, *poptr)
-    vproj_for_iteration = lambda M: decayexp(M, *poptv)
+    rproj_for_iteration = lambda M: grexp(M, *poptr)
+    vproj_for_iteration = lambda M: grexp(M, *poptv)
 
     # --------------- now need to do this calibration for the RESOLVE-B analogue dataset, down to -17.0) -------------$
     resbana_gdgrpn = fof.multiplicity_function(resbana_g3grp, return_by_galaxy=True)
@@ -284,14 +283,14 @@ if __name__=='__main__':
     massbinedges = massbinedges[:-1][~nansel]+0.1
     gdmedianrproj = gdmedianrproj[~nansel]
     gdmedianrelvel = gdmedianrelvel[~nansel]
-    poptr_resbana, jk = curve_fit(decayexp, massbinedges, gdmedianrproj, maxfev=2000, p0=poptr)
-    poptv_resbana, jk = curve_fit(decayexp, massbinedges, gdmedianrelvel, maxfev=2000, p0=poptv)
+    poptr_resbana, jk = curve_fit(grexp, massbinedges, gdmedianrproj, maxfev=2000, p0=poptr)
+    poptv_resbana, jk = curve_fit(grexp, massbinedges, gdmedianrelvel, maxfev=2000, p0=poptv)
 
     tx = np.linspace(8.7,13.2,100)
     plt.figure()
     plt.plot(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups')
     plt.plot(massbinedges, gdmedianrproj, 'r^', label='99th percentile in bin')
-    plt.plot(tx, decayexp(tx,*poptr_resbana))
+    plt.plot(tx, grexp(tx,*poptr_resbana))
     plt.xlabel(r"Integrated M* of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
@@ -303,13 +302,13 @@ if __name__=='__main__':
     plt.figure()
     plt.plot(resbana_gdtotalmass[binsel2], resbana_gdrelvel[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
     plt.plot(massbinedges, gdmedianrelvel,'r^',label='Medians')
-    plt.plot(tx, decayexp(tx, *poptv_resbana))
+    plt.plot(tx, grexp(tx, *poptv_resbana))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated M* of Giant + Dwarf Members")
     plt.show()
 
-    rproj_for_iteration_resbana = lambda M: decayexp(M, *poptr_resbana)
-    vproj_for_iteration_resbana = lambda M: decayexp(M, *poptv_resbana)
+    rproj_for_iteration_resbana = lambda M: grexp(M, *poptr_resbana)
+    vproj_for_iteration_resbana = lambda M: grexp(M, *poptv_resbana)
 
 
     ###########################################################
