@@ -106,7 +106,7 @@ if __name__=='__main__':
     plt.xlabel("Stellar Mass of Giant Galaxy")
     plt.ylabel(r"$s_i$ - Separation used for Galaxy $i$ in Giant-Only FoF [Mpc/h]")
     plt.legend(loc='best')
-    plt.savefig("images/meansep_M_r_plot.jpg")
+    #plt.savefig("images/meansep_M_r_plot.jpg")
     plt.show()
 
     # (c) perform giant-only FoF on ECO
@@ -129,7 +129,7 @@ if __name__=='__main__':
     plt.yscale('log')
     plt.legend(loc='best')
     plt.xlim(0,80)
-    plt.savefig("images/giantonlymult.jpg")
+    #plt.savefig("images/giantonlymult.jpg")
     plt.show()
     
     ##########################################
@@ -187,7 +187,7 @@ if __name__=='__main__':
     plt.xlim(0,20)
     plt.ylim(0,2.5)
     plt.xticks(np.arange(0,22,2))
-    plt.savefig("images/rproj_calibration_assoc.jpg")
+    #plt.savefig("images/rproj_calibration_assoc.jpg")
     plt.show()
 
     ####################################
@@ -248,7 +248,7 @@ if __name__=='__main__':
     plt.legend(loc='best')
     #plt.ylim(0,1.3)
     #plt.gca().invert_xaxis()
-    plt.savefig("images/itercombboundaries.jpeg")
+    #plt.savefig("images/itercombboundaries.jpeg")
     plt.show()
 
     plt.figure()

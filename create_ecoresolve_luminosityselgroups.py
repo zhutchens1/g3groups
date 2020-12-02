@@ -333,6 +333,7 @@ if __name__=='__main__':
     plt.xlabel("Number of Giant + Dwarf Group Members")
     plt.ylabel("Number of Groups")
     plt.legend(loc='best')
+    plt.xlim(0,100)
     plt.show()
  
     ############################################################
