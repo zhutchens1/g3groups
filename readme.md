@@ -30,7 +30,7 @@ Note: Positions of group centers -- `g3grpradeg`, `g3grpdedeg`, `g3grpcz` -- are
 ## Step 1: Finding Giant-Only Cores of Groups
 <details>
 
-In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We place our definition of the giant-dwarf divide at the cusp in<a href="users.castle.unc.edu/~zhutchen/dwarfgiantdivide_stellar.jpg">M*-L relation</a>, which occurs at log stellar mass ~9.5. This mass is approximately equal to the gas-richness threshold scale in stellar mass (Eckert+ 2016). For baryonic mass, we look at the <a href="users.castle.unc.edu/~zhutchen/dwarfgiantdivide_baryonic.jpg">correlation between r-band luminosity and baryonic mass </a>, and divide dwarfs from giants at its intersection with `M_r = -19.4` (which defined the M*-L cusp).
+In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We place our definition of the giant-dwarf divide at the cusp in the <a href="users.castle.unc.edu/~zhutchen/dwarfgiantdivide_stellar.jpg">M*-L relation</a>, which occurs at log stellar mass ~9.5. This mass is approximately equal to the gas-richness threshold scale in stellar mass (Eckert+ 2016). For baryonic mass, we look at the <a href="users.castle.unc.edu/~zhutchen/dwarfgiantdivide_baryonic.jpg">correlation between r-band luminosity and baryonic mass </a>, and divide dwarfs from giants at its intersection with `M_r = -19.4` (which defined the M*-L cusp).
 
 
 Therefore our selection criteria for giant-only FoF are:
@@ -56,12 +56,11 @@ At the end of step 1, we have a set of giant-only groups. All dwarfs have yet to
 ## Step 2: Associating Dwarf Galaxies to Giant-Only Groups
 <details>
 
-The next step is associate dwarf galaxies into the giant-only groups. To do so, we use the individual relative projected radii and peculiar velocities of giants to calibrate search boundaries for dwarfs. The figure below shows this calibration as a function of giant-only group N, allowing us to avoid halo mass estimates (which are problematic for high-z LADUMA work). An analagous calibration is done in velocity, but it is not shown here for brevity.
-
+The next step is to associate dwarf galaxies into the giant-only groups. To make this algorithm compatible with surveys that are incomplete into the dwarf regime, we must avoid halo mass estimates in those datasets. Therefore, we use the individual relative projected radii and peculiar velocities of ECO giant galaxies to calibrate search boundaries for dwarfs. This calibration is obtained by fitting a curve to the outermost galaxy radii in bins of giant-only group N, and comparing this curve to the expected virial radii in ECO, for which we *know* is dwarf-complete. This calibration is shown in the plot below, and while a similar calibration is done in velocity, it is not shown here for brevity. We also note that this calibration is done separately for each group-finding sample, as the giant-only FoF groups are slightly different for each selection.
 
 ![Group boundary calibration](images/rproj_calibration_assoc.jpg)
 
-The fit to medians, binned by giant-only group N, of the projected radii and velocities are shown in the blue line. The green dash-dotted line shows the optimal radii for associating dwarf galaxies, 3R<sub>proj</sub><sup>fit</sup> (or 4.5v<sub>proj</sub><sup>fit</sup> in velocity), because it is the radius that would enclose nearly-all giant galaxies if their groups were stacked at fixed N. Therefore, if a dwarf galaxy fills within  3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup> of a giant-only FoF group, we associate the dwarf as a group member. The cartoon below illustrates this concept. 
+The fit to medians, binned by giant-only group N, of the projected radii and velocities are shown in the blue line. The green dash-dotted line shows the optimal radii for associating dwarf galaxies, 3R<sub>proj</sub><sup>fit</sup> (or 4.5v<sub>proj</sub><sup>fit</sup> in velocity), because it is the radius that would enclose nearly-all giant galaxies if their groups were stacked at fixed N. Therefore, if a dwarf galaxy fills within  3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup> of a giant-only FoF group, we associate the dwarf as a group member. The cartoon below illustrates this concept. With this calibration from ECO in hand, we can apply it to other surveys for which the halo mass information does not exist. 
 
 <img src="images/assocdiagram2.jpeg" width="500" align='center'/>
 
