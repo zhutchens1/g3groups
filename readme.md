@@ -1,22 +1,29 @@
 # RESOLVE-G3 (Gas in Galaxy Groups) Group Finding Algorithm and Catalogs
 
-This github repository houses the codes and group catalogs for the new RESOLVE-G3 (Gas in Galaxy Groups) team. The subsections below describe the catalog information and the algorithm used to identify groups for RESOLVE-G3.
+This git repository stores the codes and group catalogs for the RESOLVE-G3 (Gas in Galaxy Groups) initiative. While the RESOLVE survey already contains a group catalog  constructed with FoF and halo abundance matching (HAM) (Eckert+ 2016), our ambitions with G3 beckon us to more-carefully identify groups as they inherently define the volume to detect and sum gas. For this reason, we have developed a three-part, iterative algorithm, described in the panels below, that help to mitigate some traditional errors associated with FoF (e.g., fragmentation of true groups). This algorithm has also been designed with the intent to be compatible with other surveys that are not complete into the dwarf galaxy regime, for which techniques such as HAM are not consistently transferrable. 
 
 
-## Using the Group Catalogs
+## Using the Group Data
 <details>
 
-Catalogs are provided for each set of group-finding selection criteria: the luminosity-selected group catalog, the stellar mass-selected group catalog, and the baryonic mass-selected catalog. 
-In addition to the names of variables standard in the RESOLVE and ECO databases, the following columns describe the new groups included in the catalogs:
+We provide galaxy catalogs containing group information from three group-finding selection criteria: a luminosity-selected group catalog, a stellar mass-selected group catalog,and a baryonic mass-selected (M* + 1.4MHI) group catalog. In addition to the names of variables standard in the RESOLVE and ECO databases, the following columns describe the new groups:
 
-* `g3grp`: group ID number of galaxy following the group idenitification procedure described below.
-* `g3grpn`: number of total members in the galaxy group
-* `g3grpradeg`: right-ascension of group center in decimal degrees
-* `g3grpdedeg`: declination of group center in decimal degrees
-* `g3grpcz`: Local Group-corrected velocity of group center in km/s
-* `g3grpabsrmag`: group-integrated r-band magnitude 
-* `g3grplogmstar`: group-integrated log stellar mass
-* `g3logmh`: abundance-matched log halo mass assuming h=0.7
+* `g3grp_*`: group ID number of galaxy following the group idenitification procedure described below.
+* `g3grpngi_*`: number of giant galaxies in group (from step 1 below). If `g3grpngi_*=0`, it is a dwarf-only group.
+* `g3grpndw_*`: number of dwarf galaxies in group (from steps 2 or 3 below). The total number of group numbers can be calculated as `grpngi_* + grpndw_*`.  
+* `g3grpradeg_*`: right-ascension of group center in decimal degrees
+* `g3grpdedeg_*`: declination of group center in decimal degrees
+* `g3grpcz_*`: Local Group-corrected velocity of group center in km/s
+* `g3logmh_*`: abundance-matched log halo mass (m200b) assuming h=0.7
+* `g3rvir_*`: theoretical group virial radius, in arcseconds, from halo mass (337c convention, i.e. NOT r200b)
+* `g3rproj_*`: observational group projected radius, in arcseconds, calculated as 75th percentile radius of giant and dwarf members
+* `g3router_*`: distance to outermost group member, in arcseconds, from the group center
+* `g3fc_*`: 1/0 central flag, defined as the most luminous or massive group galaxy.
+
+The wildcard `*` must be replaced with `l`, `s`, or `b` to indicate your choice of group catalog - luminosity, stellar, or baryonic selected. All variables are set to -99 if the galaxy was not included in group finding.
+
+Note: Positions of group centers -- `g3grpradeg`, `g3grpdedeg`, `g3grpcz` -- are calculated by establishing Cartesian coordinates for each galaxy member based on their individual Local-Group corrected `cz`. The group center is calculated in Cartesian coordinates, averaging (unweighted) the `x`,`y`,`z` values of each giant or dwarf group member. The group center in Cartesian coordinates is then translated back to RA, declination, and redshift. 
+
 
 </details>
 
