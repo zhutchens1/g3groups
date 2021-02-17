@@ -15,7 +15,7 @@ We provide galaxy catalogs containing group information from three group-finding
 * `g3grpdedeg_*`: declination of group center in decimal degrees
 * `g3grpcz_*`: Local Group-corrected velocity of group center in km/s
 * `g3logmh_*`: abundance-matched log halo mass (m200b) assuming h=0.7
-* `g3rvir_*`: theoretical group virial radius, in arcseconds, from halo mass (337c convention, i.e. NOT r200b)
+* `g3rvir_*`: theoretical group virial radius, in arcseconds, from halo mass (337b convention, i.e. NOT r200b)
 * `g3rproj_*`: observational group projected radius, in arcseconds, calculated as 75th percentile radius of giant and dwarf members
 * `g3router_*`: distance to outermost group member, in arcseconds, from the group center
 * `g3fc_*`: 1/0 central flag, defined as the most luminous or massive group galaxy.
@@ -30,14 +30,20 @@ Note: Positions of group centers -- `g3grpradeg`, `g3grpdedeg`, `g3grpcz` -- are
 ## Step 1: Finding Giant-Only Cores of Groups
 <details>
 
-In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We define giants as galaxies that are  more massive than the gas-richness threshold scale from Kannappan et al. (2013). Therefore our selection criteria for giant-only FoF are:
+In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We place our definition of the giant-dwarf divide at the cusp in<a href="users.castle.unc.edu/~zhutchen/dwarfgiantdivide_stellar.jpg">M*-L relation</a>, which occurs at log stellar mass ~9.5. This mass is approximately equal to the gas-richness threshold scale in stellar mass (Eckert+ 2016). For baryonic mass, we look at the <a href="users.castle.unc.edu/~zhutchen/dwarfgiantdivide_baryonic.jpg">correlation between r-band luminosity and baryonic mass </a>, and divide dwarfs from giants at its intersection with `M_r = -19.4` (which defined the M*-L cusp).
+
+
+Therefore our selection criteria for giant-only FoF are:
 
 * Luminosity-selected ECO/RESOLVE-A: `M_r<=-19.4`, `2530 < cz [km/s] < 7470`
 * Luminosity-selected RESOLVE-B: `M_r<=-19.4`, `4250 < cz [km/s] < 7250` 
 * Stellar mass-selected ECO/RESOLVE-A: `log(Mstar)>=9.5`, `2530 < cz [km/s] < 7470`
 * Stellar mass-selected RESOLVE-B: `log(Mstar)>=9.5`, `4250 < cz [km/s] < 7250`
+* Baryonic mass-selected ECO/RESOLVE-A: `log(Mbary)>=9.9`, `2530 < cz [km/s] < 7470`
+* Baryonic mass-seleted RESOLVE-B: `log(Mbary)>=9.9`, `4250 < cz [km/s] < 7250`
 
-We employ an adaptive linking strategy during this giant-only FoF procedure, inspired by Robotham et al. (2011) and its volume-limited application in Mummery (2018). We use line-of-sight b<sub>LOS</sub> and transverse b<sub>&#8869;</sub> linking multipliers of 1.1 and 0.07, respectively, as these are optimized for the study of galaxy environment (Duarte & Mamon, 2014). In a standard FoF approach, these values are multiplied by the mean separation of galaxies, s<sub>0</sub>=(V/N)<sup>1/3</sup>, and are used as linking lengths. Here we assign a different value of `s` to every galaxy, measured instead by the number density of galaxies which are greater than or equal to their luminosity or mass. We then look at the median value of `s` over all galaxies and scale all `s` values such that the median is retained at the original s<sub>0</sub>=(V/N)<sup>1/3</sup>. The figure below shows how the value of `s` varies with absolute magnitude. We apply these ECO `s` values to RESOLVE-B using a model fit, since the B semester volume is subject to cosmic variance. This approach ensures that the linking length rises with galaxy luminosity/stellar mass and therefore reduces fragmentation of identified groups.
+
+We employ an adaptive linking strategy during this giant-only FoF procedure, inspired by Robotham et al. (2011) and its volume-limited application in Mummery (2018, PhD thesis). We use line-of-sight b<sub>LOS</sub> and transverse b<sub>&#8869;</sub> linking multipliers of 1.1 and 0.07, respectively, as these are optimized for the study of galaxy environment (Duarte & Mamon, 2014). In a standard FoF approach, these values are multiplied by the mean separation of galaxies, s<sub>0</sub>=(V/N)<sup>1/3</sup>, and are used as linking lengths. Here we assign a different value of `s` to every galaxy, measured instead by the number density of galaxies which are greater than or equal to their luminosity or mass. We then look at the median value of `s` over all galaxies and scale all `s` values such that the median is retained at the original s<sub>0</sub>=(V/N)<sup>1/3</sup>. The figure below shows how the value of `s` varies with absolute magnitude. We obtain `s` values for ECO and RESOLVE-B using a model fit, to (a) smooth noise in ECO brightward of ~-23, and (b) control for cosmic variance in the RESOLVE-B volume. The fit is recomputed on stellar or baryonic mass for their respective samples. This adaptive approach ensures that the linking length rises with galaxy luminosity/stellar mass and therefore reduces fragmentation of identified groups. The shape of the curve is determined by the galaxy luminosity/mass distribution, so this curve could be extended to other surveys given that ECO is resilient to cosmic variance. 
 
 ![Separation for Giant Galaxies in FoF](images/meansep_M_r_plot.jpg)
 
