@@ -30,7 +30,7 @@ Note: Positions of group centers -- `g3grpradeg`, `g3grpdedeg`, `g3grpcz` -- are
 ## Step 1: Finding Giant-Only Cores of Groups
 <details>
 
-In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We place our definition of the giant-dwarf divide at the cusp in the <a href="users.castle.unc.edu/~zhutchen/dwarfgiantdivide_stellar.jpg">M*-L relation</a>, which occurs at log stellar mass ~9.5. This mass is approximately equal to the gas-richness threshold scale in stellar mass (Eckert+ 2016). For baryonic mass, we look at the <a href="users.castle.unc.edu/~zhutchen/dwarfgiantdivide_baryonic.jpg">correlation between r-band luminosity and baryonic mass </a>, and divide dwarfs from giants at its intersection with `M_r = -19.4` (which defined the M*-L cusp).
+In the first step of the group finder, we use friends-of-friends (FoF)  to locate groups of giant galaxies. We place our definition of the giant-dwarf divide at the cusp in the <a href="images/dwarfgiantdivide_stellar.jpg">M*-L relation</a>, which occurs at log stellar mass ~9.5. This mass is approximately equal to the gas-richness threshold scale in stellar mass (Eckert+ 2016). For baryonic mass, we look at the <a href="images/dwarfgiantdivide_baryonic.jpg">correlation between r-band luminosity and baryonic mass </a>, and divide dwarfs from giants at its intersection with `M_r = -19.4` (which defined the M*-L cusp).
 
 
 Therefore our selection criteria for giant-only FoF are:
