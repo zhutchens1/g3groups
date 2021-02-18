@@ -1,7 +1,6 @@
 # RESOLVE-G3 (Gas in Galaxy Groups) Group Finding Algorithm and Catalogs
 
-This git repository stores the codes and group catalogs for the RESOLVE-G3 (Gas in Galaxy Groups) initiative. While the RESOLVE survey already contains a group catalog  constructed with FoF and halo abundance matching (HAM) (Eckert+ 2016), our ambitions with G3 beckon us to more-carefully identify groups as they inherently define the volume to detect and sum gas. For this reason, we have developed a three-part, iterative algorithm, described in the panels below, that help to mitigate some traditional errors associated with FoF (e.g., fragmentation of true groups). This algorithm has also been designed with the intent to be compatible with other surveys that are not complete into the dwarf galaxy regime, for which techniques such as HAM are not consistently transferrable. 
-
+This git repository stores the codes and group catalogs for the RESOLVE-G3 (Gas in Galaxy Groups) initiative. RESOLVE already contains a conventional group catalog (Eckert+ 2016) produced with friends-of-friends and halo abundance matching (HAM). However, as the choice of group finder inherently defines the volume for detecting and summing gas, we have carefully devised a new group finding technique for G3. This algorithm has also been designed with the intent to be compatible with other surveys that are not complete into the dwarf galaxy regime, for which techniques such as HAM are not consistently transferrable. The panels below describe our three-step, iterative algorithm and provide information on using the galaxy catalogs.
 
 ## Using the Group Data
 <details>
@@ -71,15 +70,15 @@ The fit to medians, binned by giant-only group N, of the projected radii and vel
 ## Step 3: Finding Dwarf-Only Groups
 <details>
 
-With dwarf galaxies now associated to giant-only groups, we have a catalog of "giant+dwarf" groups, and the remaining step in the group finder is to search for dwarf-only groups -- groups that would have been missed because they do not contain a giant galaxy to be associated with. We have written an algorithm called "iterative combination" to perform this step. This algorithm uses an iterative approach, trying to merge nearest-neighbor pairs of "potential groups" based on the sizes of similarly-luminous giant+dwarf groups. The steps of this algorithm are:
+With dwarf galaxies now associated to giant-only groups, we have a catalog of "giant+dwarf" groups, and the remaining step in the group finder is to search for dwarf-only groups -- groups that would have been missed because they do not contain a giant galaxy to be associated with. We have written an algorithm called "iterative combination" to perform this step. This algorithm uses an iterative approach, trying to merge nearest-neighbor pairs of "potential groups" based on the sizes of similarly-luminous (or similarly-massive)  giant+dwarf groups. The steps of this algorithm are:
 
  1. Assign all ungrouped dwarfs (following step 2: association) to N=1 "potential" groups.
  2. Use a k-d tree to identify pairs of nearest-neighbor potential groups.
  3. For every nearest-neighbor pair, check if the pair should be merged into a single group:
-* a. Compute the integrated r-band absolute magnitude of all member galaxies belonging to the pair. 
-* b. Compute 98th percentile of relative projected radii and relative velocties of galaxies belonging to giant+dwarf groups of similar integrated luminosity or mass. These values are drawn from a fit as shown below.
+*  Depending on the group finding selection, compute the integrated r-band absolute magnitude, integrated stellar mass, or integrated baryonic mass  of all member galaxies belonging to the pair. 
+*  Compute 99th percentile of relative projected radii and relative velocties of galaxies belonging to giant+dwarf groups of similar integrated luminosity or mass. These values are drawn from a fit as shown below.
      <img src="images/itercombboundaries.jpeg"/> 
-* c. If all individual galaxies shared between the two potential groups can fit within those radii/velocities, we merge them together into a single group.
+* If all individual galaxies shared between the two potential groups can fit within those radii/velocities, we merge them together into a single group.
  4. Repeat from (2) until the dwarf-only group catalog has converged, when the potential groups are no longer merging between interations.
 
 After iterative combination has finished, we have a complete set of groups. The multiplicity function for luminosity-selected groups in ECO and RESOLVE-B is shown below.
@@ -91,7 +90,7 @@ After iterative combination has finished, we have a complete set of groups. The 
 ## Step 4: Assigning Halo Masses
 <details>
 
-Now that groups are identified, we assign halo masses based on group-integrated luminosity or stellar mass, using the method described in Eckert et al. (2016). The results of abundance matching are shown in the figure below. To assign halo masses for RESOLVE-B, we performed abundance matching on a RESOLVE-B analog version ECO which extends down to the deeper completeness floor of RESOLVE-B, and then interpolated from that result.
+Now that groups are identified, we assign halo masses based on group-integrated luminosity or stellar mass, using the method described in Eckert et al. (2016). Despite the fact that this algorithm has been designed to *avoid* halo abundance matching, we are still able to reliably apply HAM to ECO and RESOLVE, because we know them to be complete and volume-limited. The results of abundance matching are shown in the figure below. To assign halo masses for RESOLVE-B, we performed abundance matching on a RESOLVE-B analog version ECO which extends down to the deeper completeness floor of RESOLVE-B, and then interpolated from that result. For surveys that are incomplete in the dwarf regime, we will be able to use the halo mass-grop luminosity relation from ECO to estimate group masses.
 
 <img src="images/hamLrrelation.jpeg"/>
 
