@@ -28,20 +28,25 @@ from scipy.stats import binned_statistic
 import foftools as fof
 import iterativecombination as ic
 from smoothedbootstrap import smoothedbootstrap as sbs
-import pdb
+import sys
 
-def sqrtmodel(x, a, b):
-    return a*np.sqrt(b*x)
+def giantmodel(x, a, b, c, d):
+    return a*np.log(np.abs(b)*x+c)+d
 
 def decayexp(x, a, b, c, d):
-    return np.abs(a)*np.exp(-1*np.abs(b)*x + c)
+    return np.abs(a)*np.exp(-1*np.abs(b)*x + c)+np.abs(d)
+
+def sepmodel(x, a, b, c, d, e):
+    #return np.abs(a)*np.exp(-1*np.abs(b)*x + c)+d
+    #return a*(x**3)+b*(x**2)+c*x+d
+    return a*(x**4)+b*(x**3)+c*(x**2)+(d*x)+e
 
 if __name__=='__main__':
     ####################################
     # Step 1: Read in obs data
     ####################################
-    ecodata = pd.read_csv("updatedECO_fora100match.csv")
-    resolvedata = pd.read_csv("RESOLVEdata_Nov1820.csv")
+    ecodata = pd.read_csv("ECOdata_010821.csv")
+    resolvedata = pd.read_csv("RESOLVEdata_010821.csv")
     resolvebdata = resolvedata[resolvedata.f_b==1]
 
     ####################################
@@ -90,17 +95,22 @@ if __name__=='__main__':
     ecovolume = 192351.36 # Mpc^3 with h=1 **
     meansep0 = (ecovolume/len(ecoabsrmag[ecogiantsel]))**(1/3.)
     ecogiantmags = ecoabsrmag[ecogiantsel]
-    ecogiantsep = np.array([(192351.36/len(ecogiantmags[ecogiantmags<=Mr]))**(1/3.) for Mr in ecogiantmags])
-    ecogiantsep = ecogiantsep*meansep0/np.median(ecogiantsep)
+    ecogiantsepdata = np.array([(192351.36/len(ecogiantmags[ecogiantmags<=Mr]))**(1/3.) for Mr in ecogiantmags])
+    ecogiantsepdata = ecogiantsepdata*meansep0/np.median(ecogiantsepdata)
+    poptsfit, pcovsfit = curve_fit(sepmodel, ecogiantmags, ecogiantsepdata) 
+    meansepinterp = lambda x: sepmodel(x, *poptsfit) 
+    ecogiantsep = meansepinterp(ecogiantmags)
+    print("Median Residual of Separation Fit: {} Mpc/h".format(np.median(np.abs(ecogiantsep-ecogiantsepdata))))
 
     # (b) make an interpolation function use this for RESOLVE-B  
-    meansepinterp = interp1d(ecogiantmags, ecogiantsep, fill_value='extrapolate')
     resbgiantsel = (resbabsrmag<=-19.4) & (resbcz>4250) & (resbcz<7250)
     resbgiantsep = meansepinterp(resbabsrmag[resbgiantsel])
 
     plt.figure()
-    plt.axhline(meansep0, label=r'Mean Separation of ECO Giant Galaxies, $s_0 = (V/N)^{1/3}$')
-    plt.plot(ecogiantmags, ecogiantsep, 'k.', alpha=1, label=r'ECO Giant Galaxies ($M_r \leq -19.4$)')
+    tx=np.linspace(-24,-19.3,100)
+    plt.axhline(meansep0, label=r'Mean Separation of ECO Giant Galaxies, $s_0 = (V/N)^{1/3}$', color='k', linestyle='--')
+    plt.plot(tx, meansepinterp(tx), label='Model Fit')
+    plt.plot(ecogiantmags, ecogiantsepdata, 'k.', alpha=1, label=r'ECO Giant Galaxies ($M_r \leq -19.4$)')
     plt.plot(resbabsrmag[resbgiantsel], resbgiantsep, 'r^', alpha=0.4, label=r'RESOLVE-B Giant Galaxies (interpolated, $M_r \leq -19.4$)')
     plt.xlabel("Absolute $M_r$ of Giant Galaxy")
     plt.ylabel(r"$s_i$ - Separation used for Galaxy $i$ in Giant-Only FoF [Mpc/h]")
@@ -112,11 +122,12 @@ if __name__=='__main__':
     # (c) perform giant-only FoF on ECO
     blos = 1.1
     bperp = 0.07 # from Duarte & Mamon 2014
-    ecogiantfofid = fof.fast_fof(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], bperp, blos, ecogiantsep)
+    ADAPTIVE_OPTION=1
+    ecogiantfofid = fof.fast_fof(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], bperp, blos, (1-ADAPTIVE_OPTION)*meansep0+ADAPTIVE_OPTION*ecogiantsep) # meansep0 if fixed LL
     ecog3grp[ecogiantsel] = ecogiantfofid
     resbana_g3grp[ecogiantsel] = ecogiantfofid # RESOLVE-B analogue dataset
     # (d) perform giant-only FoF on RESOLVE-B
-    resbgiantfofid = fof.fast_fof(resbradeg[resbgiantsel], resbdedeg[resbgiantsel], resbcz[resbgiantsel], bperp, blos, resbgiantsep)
+    resbgiantfofid = fof.fast_fof(resbradeg[resbgiantsel], resbdedeg[resbgiantsel], resbcz[resbgiantsel], bperp, blos, (1-ADAPTIVE_OPTION)*meansep0+ADAPTIVE_OPTION*resbgiantsep)
     resbg3grp[resbgiantsel] = resbgiantfofid
  
     # (e) check the FOF results
@@ -145,42 +156,50 @@ if __name__=='__main__':
     median_relprojdist = np.array([np.median(relprojdist[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
     median_relvel = np.array([np.median(relvel[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
 
-    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
-    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 100000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 100000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
 
     #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
-    poptrproj, jk = curve_fit(sqrtmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error)
-    poptdvproj,jk = curve_fit(sqrtmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error) 
-    rproj_boundary = lambda N: 3*sqrtmodel(N, *poptrproj) #3*(rprojslope*N+rprojint)
-    vproj_boundary = lambda N: 4.5*sqrtmodel(N, *poptdvproj) #4.5*(dvprojslope*N+dvprojint)
-    print("--- best fit parameters for dwarf assoc ----")
-    print(poptrproj)
-    print(poptdvproj)
+    poptrproj, jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error, p0=[0.1, -2, 3, -0.1])
+    poptdvproj,jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error, p0=[160,6.5,45,-600]) 
+    rproj_boundary = lambda N: 3*giantmodel(N, *poptrproj) #3*(rprojslope*N+rprojint)
+    vproj_boundary = lambda N: 4.5*giantmodel(N, *poptdvproj) #4.5*(dvprojslope*N+dvprojint)
+
+    # get virial radii from abundance matching to giant-only groups
+    gihaloid, gilogmh, gir200, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecoabsrmag[ecogiantsel], ecog3grp[ecogiantsel],\
+                                                                ecovolume, inputfilename=None, outputfilename=None)
+    gihalorvir = (3*(10**gilogmh / fof.getmhoffset(200,337,1,1,6)) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
+    gihalon = fof.multiplicity_function(np.sort(ecog3grp[ecogiantsel]), return_by_galaxy=False)
+    plt.figure()
+    plt.plot(gihalon, gihalorvir, 'k.')
+    plt.show()
 
     plt.figure()
     sel = (ecogiantgrpn>1)
+    plt.scatter(gihalon, gihalovdisp, marker='D', color='purple', label=r'ECO HAM Velocity Dispersion')
     plt.plot(ecogiantgrpn[sel], relvel[sel], 'r.', alpha=0.2, label='ECO Giant Galaxies')
     plt.errorbar(uniqecogiantgrpn[keepcalsel], median_relvel, fmt='k^', label=r'$\Delta v_{\rm proj}$ (Median of $\Delta v_{\rm proj,\, gal}$)',yerr=dvproj_median_error)
-    tx = np.linspace(0,max(ecogiantgrpn),1000)
-    plt.plot(tx, sqrtmodel(tx, *poptdvproj), label=r'$1\Delta v_{\rm proj}^{\rm fit}$')
-    plt.plot(tx, 4.5*sqrtmodel(tx, *poptdvproj), 'g',  label=r'$4.5\Delta v_{\rm proj}^{\rm fit}$', linestyle='-.')
+    tx = np.linspace(1,max(ecogiantgrpn),1000)
+    plt.plot(tx, giantmodel(tx, *poptdvproj), label=r'$1\Delta v_{\rm proj}^{\rm fit}$')
+    plt.plot(tx, 4.5*giantmodel(tx, *poptdvproj), 'g',  label=r'$4.5\Delta v_{\rm proj}^{\rm fit}$', linestyle='-.')
     plt.xlabel("Number of Giant Members")
     plt.ylabel("Relative Velocity to Group Center [km/s]")
     plt.legend(loc='best')
     plt.show()
 
     plt.clf()
+    plt.scatter(gihalon, gihalorvir, marker='D', color='purple', label=r'ECO Group Virial Radii')
     plt.plot(ecogiantgrpn[sel], relprojdist[sel], 'r.', alpha=0.2, label='ECO Giant Galaxies')
     plt.errorbar(uniqecogiantgrpn[keepcalsel], median_relprojdist, fmt='k^', label=r'$R_{\rm proj}$ (Median of $R_{\rm proj,\, gal}$)',yerr=rproj_median_error)
-    plt.plot(tx, sqrtmodel(tx, *poptrproj), label=r'$1R_{\rm proj}^{\rm fit}$')
-    plt.plot(tx, 3*sqrtmodel(tx, *poptrproj), 'g', label=r'$3R_{\rm proj}^{\rm fit}$', linestyle='-.')
+    plt.plot(tx, giantmodel(tx, *poptrproj), label=r'$1R_{\rm proj}^{\rm fit}$')
+    plt.plot(tx, 3*giantmodel(tx, *poptrproj), 'g', label=r'$3R_{\rm proj}^{\rm fit}$', linestyle='-.')
     plt.xlabel("Number of Giant Members in Galaxy's Group")
     plt.ylabel("Projected Distance from Giant to Group Center [Mpc/h]")
     plt.legend(loc='best')
-    plt.xlim(0,20)
-    plt.ylim(0,2.5)
-    plt.xticks(np.arange(0,22,2))
+    #plt.xlim(0,20)
+    #plt.ylim(0,2.5)
+    #plt.xticks(np.arange(0,22,2))
     plt.savefig("images/rproj_calibration_assoc.jpg")
     plt.show()
 
@@ -218,13 +237,18 @@ if __name__=='__main__':
     ecogdn = ecogdgrpn[ecogdsel]
     ecogdtotalmag = ic.get_int_mag(ecoabsrmag[ecogdsel], ecog3grp[ecogdsel])
    
-    magbins=np.arange(-24,-19,0.5)
+    magbins=np.arange(-24,-19,0.25)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmag>-24))
-    gdmedianrproj, magbinedges, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], lambda x:np.percentile(x,99), bins=magbins)
-    gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelvel[binsel], lambda x: np.percentile(x,99), bins=magbins)
-    print(magbinedges[:-1], gdmedianrproj, gdmedianrelvel)
-    poptr, pcovr = curve_fit(decayexp, magbinedges[:-1], gdmedianrproj)
-    poptv, pcovv = curve_fit(decayexp, magbinedges[:-1], gdmedianrelvel) 
+    gdmedianrproj, magbinedges, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,99), bins=magbins)
+    gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,99), bins=magbins)
+    nansel = np.isnan(gdmedianrproj)
+    if ADAPTIVE_OPTION: 
+        guess=None
+    else:
+        guess=[1e-5, 0.4, 0.2, 1]
+    poptr, pcovr = curve_fit(decayexp, magbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=guess)
+    print("guess:", poptr)
+    poptv, pcovv = curve_fit(decayexp, magbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
 
     tx = np.linspace(-27,-17,100)
     plt.figure()
@@ -246,6 +270,7 @@ if __name__=='__main__':
     plt.plot(tx, decayexp(tx, *poptv))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
+    plt.gca().invert_xaxis()
     plt.show()
 
     rproj_for_iteration = lambda M: decayexp(M, *poptr)
@@ -255,22 +280,20 @@ if __name__=='__main__':
     resbana_gdgrpn = fof.multiplicity_function(resbana_g3grp, return_by_galaxy=True)
     #resbana_gdsel = np.logical_not((resbana_gdgrpn==1) & (ecoabsrmag>-19.4) & (resbana_g3grp!=-99.) & (resbana_g3grp>0)) # select galaxies that AREN'T ungrouped dwarfs
     resbana_gdsel = np.logical_not(np.logical_or(resbana_g3grp==-99., ((resbana_gdgrpn==1) & (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.0))))
-    print(np.min(resbana_g3grp[resbana_gdsel]))
     resbana_gdgrpra, resbana_gdgrpdec, resbana_gdgrpcz = fof.group_skycoords(ecoradeg[resbana_gdsel], ecodedeg[resbana_gdsel], ecocz[resbana_gdsel], resbana_g3grp[resbana_gdsel])
     resbana_gdrelvel = np.abs(resbana_gdgrpcz - ecocz[resbana_gdsel])
     resbana_gdrelprojdist = (resbana_gdgrpcz + ecocz[resbana_gdsel])/100. * ic.angular_separation(resbana_gdgrpra, resbana_gdgrpdec, ecoradeg[resbana_gdsel], ecodedeg[resbana_gdsel])/2.0
-    print(resbana_gdrelvel, resbana_gdrelprojdist)
 
     resbana_gdn = resbana_gdgrpn[resbana_gdsel]
     resbana_gdtotalmag = ic.get_int_mag(ecoabsrmag[resbana_gdsel], resbana_g3grp[resbana_gdsel])
 
-    magbins2=np.arange(-24,-19,0.5)
+    magbins2=np.arange(-24,-19,0.25)
     binsel2 = np.where(np.logical_and(resbana_gdn>1, resbana_gdtotalmag>-24))
-    gdmedianrproj, magbinedges, jk = binned_statistic(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.percentile(x,99), bins=magbins2)
-    gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], lambda x: np.percentile(x,99), bins=magbins2)
-    poptr_resbana, jk = curve_fit(decayexp, magbinedges[:-1], gdmedianrproj)
-    poptv_resbana, jk = curve_fit(decayexp, magbinedges[:-1], gdmedianrelvel)
-    print(magbinedges[:-1], gdmedianrproj)    
+    gdmedianrproj, magbinedges, jk = binned_statistic(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,99), bins=magbins2)
+    gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,99), bins=magbins2)
+    nansel = np.isnan(gdmedianrproj)
+    poptr_resbana, jk = curve_fit(decayexp, magbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=poptr)
+    poptv_resbana, jk = curve_fit(decayexp, magbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
 
     tx = np.linspace(-27,-16,100)
     plt.figure()
@@ -291,6 +314,7 @@ if __name__=='__main__':
     plt.plot(tx, decayexp(tx, *poptv_resbana))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
+    plt.gca().invert_xaxis()
     plt.show()
 
     rproj_for_iteration_resbana = lambda M: decayexp(M, *poptr_resbana)
@@ -306,7 +330,6 @@ if __name__=='__main__':
     resbana_grpnafterassoc = fof.multiplicity_function(resbana_g3grp, return_by_galaxy=True)
 
     eco_ungroupeddwarf_sel = (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.33) & (ecocz<7470) & (ecocz>2530) & (ecogrpnafterassoc==1)
-    print(eco_ungroupeddwarf_sel)
     ecoitassocid = ic.iterative_combination(ecoradeg[eco_ungroupeddwarf_sel], ecodedeg[eco_ungroupeddwarf_sel], ecocz[eco_ungroupeddwarf_sel], ecoabsrmag[eco_ungroupeddwarf_sel],\
                                            rproj_for_iteration, vproj_for_iteration, starting_id=np.max(ecog3grp)+1, centermethod='arithmetic')
     
@@ -347,7 +370,7 @@ if __name__=='__main__':
     resbana_intmag = ic.get_int_mag(ecoabsrmag[resbana_hamsel], resbana_g3grp[resbana_hamsel])[uniqindex]
     sortind = np.argsort(resbana_intmag)
     sortedmag = resbana_intmag[sortind]
-    resbcubicspline = interp1d(sortedmag, resbana_halomass[sortind])    
+    resbcubicspline = interp1d(sortedmag, resbana_halomass[sortind], fill_value='extrapolate')    
     
     resbintmag = ic.get_int_mag(resbabsrmag[resbg3grp!=-99.], resbg3grp[resbg3grp!=-99.])
     resbg3logmh[resbg3grp!=-99.] = resbcubicspline(resbintmag)-np.log10(0.7)
@@ -360,8 +383,11 @@ if __name__=='__main__':
     halomass = halomass-np.log10(0.7)
     for i,idv in enumerate(haloid):
         sel = np.where(ecog3grp==idv)
-        ecog3logmh[sel] = halomass[i]
-
+        ecog3logmh[sel] = halomass[i] # m200b
+    
+    # calculate Rvir in arcsec
+    ecog3rvir = (3*(10**ecog3logmh / fof.getmhoffset(200,337,1,1,6)) / (4*np.pi*337*0.3*1.36e11) )**(1/3.)#/(ecog3grpcz/70.) * 206265
+    resbg3rvir = (3*(10**resbg3logmh / fof.getmhoffset(200,377,1,1,6)) / (4*np.pi*337*0.3*1.36e11))**(1/3.)#/(resbg3grpcz/70.) * 206265
 
     ecointmag = ic.get_int_mag(ecoabsrmag[ecohamsel], ecog3grp[ecohamsel])
     plt.figure()
@@ -381,88 +407,155 @@ if __name__=='__main__':
     # ---- first get the quantities for ECO ---- #
     #eco_in_gf = np.where(ecog3grp!=-99.)
     ecog3grpn = fof.multiplicity_function(ecog3grp, return_by_galaxy=True)
+    ecog3grpngi = np.zeros(len(ecog3grpn))
+    ecog3grpndw = np.zeros(len(ecog3grpn))
+    for uid in np.unique(ecog3grp):
+        grpsel = np.where(ecog3grp==uid)
+        gisel = np.where(np.logical_and((ecog3grp==uid),(ecoabsrmag<=-19.4)))
+        dwsel = np.where(np.logical_and((ecog3grp==uid), (ecoabsrmag>-19.4)))
+        if len(gisel[0])>0.:
+            ecog3grpngi[grpsel] = len(gisel[0])
+        if len(dwsel[0])>0.:
+            ecog3grpndw[grpsel] = len(dwsel[0])
+
     ecog3grpradeg, ecog3grpdedeg, ecog3grpcz = fof.group_skycoords(ecoradeg, ecodedeg, ecocz, ecog3grp)
-    ecog3intmag = ic.get_int_mag(ecoabsrmag, ecog3grp)
-    ecog3intmstar = ic.get_int_mass(ecologmstar, ecog3grp)
-  
-    outofsample = (ecog3grp==99.)
+    ecog3rproj = fof.get_grprproj_e17(ecoradeg, ecodedeg, ecocz, ecog3grp, h=0.7) / (ecog3grpcz/70.) * 206265 # in arcsec
+    ecog3fc = fof.get_central_flag(ecoabsrmag, ecog3grp) 
+    ecog3router = fof.get_outermost_galradius(ecoradeg, ecodedeg, ecocz, ecog3grp) # in arcsec
+    junk, ecog3vdisp = fof.get_rproj_czdisp(ecoradeg, ecodedeg, ecocz, ecog3grp)
+    ecog3rvir = ecog3rvir*206265/(ecog3grpcz/70.) 
+
+    outofsample = (ecog3grp==-99.)
     ecog3grpn[outofsample]=-99.
+    ecog3grpngi[outofsample]=-99.
+    ecog3grpndw[outofsample]=-99.
     ecog3grpradeg[outofsample]=-99.
     ecog3grpdedeg[outofsample]=-99.
     ecog3grpcz[outofsample]=-99.
-    ecog3intmag[outofsample]=-99.
-    ecog3intmstar[outofsample]=-99.
     ecog3logmh[outofsample]=-99.
- 
-    ecodata['g3grp'] = ecog3grp
-    ecodata['g3grn'] = ecog3grpn
-    ecodata['g3grpradeg'] = ecog3grpradeg
-    ecodata['g3grpdedeg'] = ecog3grpdedeg
-    ecodata['g3grpcz'] = ecog3grpcz
-    ecodata['g3grpabsrmag'] = ecog3intmag
-    ecodata['g3grpmstar'] = ecog3intmstar
-    ecodata['g3logmh'] = ecog3logmh
-    ecodata.to_csv("ECOdata_G3catalog_luminosity.csv")    
+    ecog3rvir[outofsample]=-99.
+    ecog3rproj[outofsample]=-99.
+    ecog3fc[outofsample]=-99.
+    ecog3router[outofsample]=-99.
+    ecog3vdisp[outofsample]=-99.
+    insample = ecog3grpn!=-99.
+
+    ecodata['g3grp_l'] = ecog3grp
+    ecodata['g3grpradeg_l'] = ecog3grpradeg
+    ecodata['g3grpdedeg_l'] = ecog3grpdedeg
+    ecodata['g3grpcz_l'] = ecog3grpcz
+    ecodata['g3grpndw_l'] = ecog3grpndw
+    ecodata['g3grpngi_l'] = ecog3grpngi
+    ecodata['g3logmh_l'] = ecog3logmh
+    ecodata['g3rvir_l'] = ecog3rvir
+    ecodata['g3rproj_l'] = ecog3rproj
+    ecodata['g3router_l'] = ecog3router
+    ecodata['g3fc_l'] = ecog3fc
+    ecodata['g3vdisp_l'] = ecog3vdisp
+    ecodata.to_csv("ECOdata_G3catalog_luminosity.csv", index=False)    
 
     # ------ now do RESOLVE
     sz = len(resolvedata)
     resolvename = np.array(resolvedata.name)
     resolveg3grp = np.full(sz, -99.)
-    resolveg3grpn = np.full(sz, -99.)
+    resolveg3grpngi = np.full(sz, -99.)
+    resolveg3grpndw = np.full(sz, -99.)
     resolveg3grpradeg = np.full(sz, -99.)
     resolveg3grpdedeg = np.full(sz, -99.)
     resolveg3grpcz = np.full(sz, -99.)
     resolveg3intmag = np.full(sz, -99.)
     resolveg3intmstar = np.full(sz, -99.)
     resolveg3logmh = np.full(sz, -99.)
+    resolveg3rvir = np.full(sz, -99.)
+    resolveg3rproj = np.full(sz,-99.)
+    resolveg3fc = np.full(sz,-99.)
+    resolveg3router = np.full(sz,-99.)
+    resolveg3vdisp = np.full(sz,-99.)
 
-    resbg3grpn = fof.multiplicity_function(resbg3grp, return_by_galaxy=True)
+    resbg3grpngi = np.full(len(resbg3grp), -99)
+    resbg3grpndw = np.full(len(resbg3grp), -99)
+    for uid in np.unique(resbg3grp):
+        grpsel = np.where(resbg3grp==uid)
+        gisel = np.where(np.logical_and((resbg3grp==uid),(resbabsrmag<=-19.4)))
+        dwsel = np.where(np.logical_and((resbg3grp==uid), (resbabsrmag>-19.4)))
+        if len(gisel[0])>0.:
+            resbg3grpngi[grpsel] = len(gisel[0])
+        if len(dwsel[0])>0.:
+            resbg3grpndw[grpsel] = len(dwsel[0])
+
     resbg3grpradeg, resbg3grpdedeg, resbg3grpcz = fof.group_skycoords(resbradeg, resbdedeg, resbcz, resbg3grp)
     resbg3intmag = ic.get_int_mag(resbabsrmag, resbg3grp)
     resbg3intmstar = ic.get_int_mass(resblogmstar, resbg3grp)
+    resbg3rproj = fof.get_grprproj_e17(resbradeg, resbdedeg, resbcz, resbg3grp, h=0.7) / (resbg3grpcz/70.) * 206265 # in arcsec 
+    resbg3fc = fof.get_central_flag(resbabsrmag, resbg3grp)
+    resbg3router = fof.get_outermost_galradius(resbradeg, resbdedeg, resbcz, resbg3grp) # in arcsec
+    junk, resbg3vdisp = fof.get_rproj_czdisp(resbradeg, resbdedeg, resbcz, resbg3grp)
+    resbg3rvir = resbg3rvir*206265/(resbg3grpcz/70.)
+    print(resbg3rvir)  
 
-    outofsample = (resbg3grp==99.)
-    resbg3grpn[outofsample]=-99.
+    outofsample = (resbg3grp==-99.)
+    resbg3grpngi[outofsample]=-99.
+    resbg3grpndw[outofsample]=-99.
     resbg3grpradeg[outofsample]=-99.
     resbg3grpdedeg[outofsample]=-99.
     resbg3grpcz[outofsample]=-99.
     resbg3intmag[outofsample]=-99.
     resbg3intmstar[outofsample]=-99.
     resbg3logmh[outofsample]=-99.
-
+    resbg3rvir[outofsample]=-99.
+    resbg3rproj[outofsample]=-99.
+    resbg3router[outofsample]=-99.
+    resbg3fc[outofsample]=-99.
+    resbg3vdisp[outofsample]=-99.
     for i,nm in enumerate(resolvename):
         if nm.startswith('rs'):
             sel_in_eco = np.where(ecoresname==nm)
             resolveg3grp[i] = ecog3grp[sel_in_eco]
-            resolveg3grpn[i] = ecog3grpn[sel_in_eco]
+            resolveg3grpngi[i] = ecog3grpngi[sel_in_eco]
+            resolveg3grpndw[i] = ecog3grpndw[sel_in_eco]
             resolveg3grpradeg[i] = ecog3grpradeg[sel_in_eco]
             resolveg3grpdedeg[i] = ecog3grpdedeg[sel_in_eco]
             resolveg3grpcz[i] = ecog3grpcz[sel_in_eco]
             resolveg3intmag[i] = ecog3intmag[sel_in_eco]
             resolveg3intmstar[i] = ecog3intmstar[sel_in_eco]
             resolveg3logmh[i] = ecog3logmh[sel_in_eco]
+            resolveg3rvir[i] = ecog3rvir[sel_in_eco]
+            resolveg3rproj[i] = ecog3rproj[sel_in_eco]
+            resolveg3fc[i] = ecog3fc[sel_in_eco]
+            resolveg3router[i]=ecog3router[sel_in_eco]
+            resolveg3vdisp[i]=ecog3vdisp[sel_in_eco]
         elif nm.startswith('rf'):
             sel_in_resb = np.where(resbname==nm)
             resolveg3grp[i] = resbg3grp[sel_in_resb]
-            resolveg3grpn[i] = resbg3grpn[sel_in_resb]
+            resolveg3grpngi[i] = resbg3grpngi[sel_in_resb]
+            resolveg3grpndw[i] = resbg3grpndw[sel_in_resb]
             resolveg3grpradeg[i] = resbg3grpradeg[sel_in_resb]
             resolveg3grpdedeg[i] = resbg3grpdedeg[sel_in_resb]
             resolveg3grpcz[i] = resbg3grpcz[sel_in_resb]
             resolveg3intmag[i] = resbg3intmag[sel_in_resb]
             resolveg3intmstar[i] = resbg3intmstar[sel_in_resb]
             resolveg3logmh[i] = resbg3logmh[sel_in_resb]
+            resolveg3rvir[i] = resbg3rvir[sel_in_resb]
+            resolveg3rproj[i] = resbg3rproj[sel_in_resb]
+            resolveg3fc[i] = resbg3fc[sel_in_resb]
+            resolveg3router[i] = resbg3router[sel_in_resb]
+            resolveg3vdisp[i] = resbg3vdisp[sel_in_resb]
         else:
             assert False, nm+" not in RESOLVE"
 
-    resolvedata['g3grp'] = resolveg3grp
-    resolvedata['g3grpn'] = resolveg3grpn
-    resolvedata['g3grpradeg'] = resolveg3grpradeg
-    resolvedata['g3grpdedeg'] = resolveg3grpdedeg
-    resolvedata['g3grpcz'] = resolveg3grpcz
-    resolvedata['g3grpabsrmag'] = resolveg3intmag
-    resolvedata['g3grpmstar'] = resolveg3intmstar
-    resolvedata['g3logmh'] = resolveg3logmh
-    resolvedata.to_csv("RESOLVEdata_G3catalog_luminosity.csv")
+    resolvedata['g3grp_l'] = resolveg3grp
+    resolvedata['g3grpngi_l'] = resolveg3grpngi
+    resolvedata['g3grpndw_l'] = resolveg3grpndw
+    resolvedata['g3grpradeg_l'] = resolveg3grpradeg
+    resolvedata['g3grpdedeg_l'] = resolveg3grpdedeg
+    resolvedata['g3grpcz_l'] = resolveg3grpcz
+    resolvedata['g3logmh_l'] = resolveg3logmh
+    resolvedata['g3rvir_l'] = resolveg3rvir
+    resolvedata['g3rproj_l'] = resolveg3rproj
+    resolvedata['g3router_l'] = resolveg3router
+    resolvedata['g3fc_l'] = resolveg3fc
+    resolvedata['g3vdisp_l'] = resolveg3vdisp
+    resolvedata.to_csv("RESOLVEdata_G3catalog_luminosity.csv", index=False)
 
     
 
