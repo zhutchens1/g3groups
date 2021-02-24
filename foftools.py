@@ -24,7 +24,7 @@ from scipy.interpolate import interp1d
 from math import erf
 from copy import deepcopy
 import math
-from time import clock
+import time
 import warnings
 from numba import njit
 
@@ -59,7 +59,7 @@ def fast_fof(ra, dec, cz, bperp, blos, s, printConf=True):
                 The list will have shape len(ra).
     -----------
     """
-    t1 = clock()
+    t1 = time.time()
     Ngalaxies = len(ra)
     ra = np.float64(ra)
     dec = np.float64(dec)
@@ -98,13 +98,13 @@ def fast_fof(ra, dec, cz, bperp, blos, s, printConf=True):
         assert np.all(np.abs(friendship-friendship.T) < 1e-8), "Friendship matrix must be symmetric."
     
         if printConf:
-            print('FoF complete in {a:0.4f} s'.format(a=clock()-t1))
+            print('FoF complete in {a:0.4f} s'.format(a=time.time()-t1))
     # compute friendship - adaptive case
     elif adaptive:
         index = np.where(np.logical_and(dlos-blos*s<=0, dperp-bperp*s<=0))
         friendship[index]=1
         if printConf:
-            print('FoF complete in {a:0.4f} s'.format(a=clock()-t1))        
+            print('FoF complete in {a:0.4f} s'.format(a=time.time()-t1))        
 
     return collapse_friendship_matrix(friendship)
 
@@ -156,7 +156,7 @@ def fast_pfof(ra, dec, cz, czerr, perpll, losll, Pth, printConf=True):
     -----
     """
     print('you know.... you could speed this up more if check for transverse friendship before integrating...')
-    t1 = clock()
+    t1 = time.time()
     Ngalaxies = len(ra)
     ra = np.float32(ra)
     dec = np.float32(dec)
@@ -197,7 +197,7 @@ def fast_pfof(ra, dec, cz, czerr, perpll, losll, Pth, printConf=True):
     assert np.all(np.abs(friendship-friendship.T) < 1e-8), "Friendship matrix must be symmetric."
     
     if printConf:
-        print('PFoF complete in {a:0.4f} s'.format(a=clock()-t1))
+        print('PFoF complete in {a:0.4f} s'.format(a=time.time()-t1))
     return collapse_friendship_matrix(friendship)
 
 
