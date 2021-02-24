@@ -45,9 +45,13 @@ if __name__=='__main__':
     ####################################
     # Step 1: Read in obs data
     ####################################
-    ecodata = pd.read_csv("ECOdata_010821.csv")
-    resolvedata = pd.read_csv("RESOLVEdata_010821.csv")
+    ecodata = pd.read_csv("ECOdata_022321.csv")
+    resolvedata = pd.read_csv("RESOLVEdata_022321.csv")
     resolvebdata = resolvedata[resolvedata.f_b==1]
+    
+    print(ecodata.logmgas)
+    sel = (ecodata.logmgas=='None')
+    print(ecodata[['dup', 'logmgas', 'logmstar', 'logmgas_a100']][sel])    
 
     ####################################
     # Step 2: Prepare arrays
@@ -59,7 +63,9 @@ if __name__=='__main__':
     ecodedeg = np.array(ecodata.dedeg)
     ecocz = np.array(ecodata.cz)
     ecologmstar = np.array(ecodata.logmstar)
-    ecologmgas = np.array(ecodata.logmgas)
+    ecologmgas = np.float64([float(j) for j in ecodata.logmgas])
+    for j in ecodata.logmgas:
+        print(type(j))
     ecologmbary = np.log10(10**ecologmstar + 10**ecologmgas)
     ecologmstar=None
     ecog3grp = np.full(ecosz, -99.) # id number of g3 group
@@ -77,8 +83,8 @@ if __name__=='__main__':
     resbdedeg = np.array(resolvebdata.dedeg)
     resbcz = np.array(resolvebdata.cz)
     resblogmstar = np.array(resolvebdata.logmstar)
-    resblogmgas = np.array(resolvebdata.logmgas)
-    resblogmbary = np.log10(10**resblogmstar + 10**resblogmbary)
+    resblogmgas = np.float64([float(j) for j in resolvebdata.logmgas])
+    resblogmbary = np.log10(10**resblogmstar + 10**resblogmgas)
     resblogmstar=None
     resbg3grp = np.full(resbsz, -99.)
     resbg3grpn = np.full(resbsz, -99.)
@@ -153,8 +159,8 @@ if __name__=='__main__':
     median_relprojdist = np.array([np.median(relprojdist[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
     median_relvel = np.array([np.median(relvel[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
 
-    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 100000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
-    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 100000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
 
     #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
@@ -238,9 +244,10 @@ if __name__=='__main__':
     gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,99), bins=massbins)
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION:
-        guess=None
+        #guess=None
+        guess = [ 5,5e-01,-7, 5e-10]
     else:
-        guess= [-1,0.5,-6,0.01]#None#[1e-5, 0.4, 0.2, 1]
+        guess = [ 4e+00, 5e-01, -8, -9e-09]
     poptr, pcovr = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=guess)
     print("guess:", poptr)
     poptv, pcovv = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
@@ -427,18 +434,18 @@ if __name__=='__main__':
     ecog3vdisp[outofsample]=-99.
     insample = ecog3grpn!=-99.
 
-    ecodata['g3grp_s'] = ecog3grp
-    ecodata['g3grpradeg_s'] = ecog3grpradeg
-    ecodata['g3grpdedeg_s'] = ecog3grpdedeg
-    ecodata['g3grpcz_s'] = ecog3grpcz
-    ecodata['g3grpndw_s'] = ecog3grpndw
-    ecodata['g3grpngi_s'] = ecog3grpngi
-    ecodata['g3logmh_s'] = ecog3logmh
-    ecodata['g3rvir_s'] = ecog3rvir
-    ecodata['g3rproj_s'] = ecog3rproj
-    ecodata['g3router_s'] = ecog3router
-    ecodata['g3fc_s'] = ecog3fc
-    ecodata['g3vdisp_s'] = ecog3vdisp
+    ecodata['g3grp_b'] = ecog3grp
+    ecodata['g3grpradeg_b'] = ecog3grpradeg
+    ecodata['g3grpdedeg_b'] = ecog3grpdedeg
+    ecodata['g3grpcz_b'] = ecog3grpcz
+    ecodata['g3grpndw_b'] = ecog3grpndw
+    ecodata['g3grpngi_b'] = ecog3grpngi
+    ecodata['g3logmh_b'] = ecog3logmh
+    ecodata['g3rvir_b'] = ecog3rvir
+    ecodata['g3rproj_b'] = ecog3rproj
+    ecodata['g3router_b'] = ecog3router
+    ecodata['g3fc_b'] = ecog3fc
+    ecodata['g3vdisp_b'] = ecog3vdisp
     ecodata.to_csv("ECOdata_G3catalog_baryonic.csv", index=False)
 
     # ------ now do RESOLVE
@@ -520,16 +527,16 @@ if __name__=='__main__':
         else:
             assert False, nm+" not in RESOLVE"
 
-    resolvedata['g3grp_s'] = resolveg3grp
-    resolvedata['g3grpngi_s'] = resolveg3grpngi
-    resolvedata['g3grpndw_s'] = resolveg3grpndw
-    resolvedata['g3grpradeg_s'] = resolveg3grpradeg
-    resolvedata['g3grpdedeg_s'] = resolveg3grpdedeg
-    resolvedata['g3grpcz_s'] = resolveg3grpcz
-    resolvedata['g3logmh_s'] = resolveg3logmh
-    resolvedata['g3rvir_s'] = resolveg3rvir
-    resolvedata['g3rproj_s'] = resolveg3rproj
-    resolvedata['g3router_s'] = resolveg3router
-    resolvedata['g3fc_s'] = resolveg3fc
-    resolvedata['g3vdisp_s'] = resolveg3vdisp
+    resolvedata['g3grp_b'] = resolveg3grp
+    resolvedata['g3grpngi_b'] = resolveg3grpngi
+    resolvedata['g3grpndw_b'] = resolveg3grpndw
+    resolvedata['g3grpradeg_b'] = resolveg3grpradeg
+    resolvedata['g3grpdedeg_b'] = resolveg3grpdedeg
+    resolvedata['g3grpcz_b'] = resolveg3grpcz
+    resolvedata['g3logmh_b'] = resolveg3logmh
+    resolvedata['g3rvir_b'] = resolveg3rvir
+    resolvedata['g3rproj_b'] = resolveg3rproj
+    resolvedata['g3router_b'] = resolveg3router
+    resolvedata['g3fc_b'] = resolveg3fc
+    resolvedata['g3vdisp_b'] = resolveg3vdisp
     resolvedata.to_csv("RESOLVEdata_G3catalog_baryonic.csv", index=False)

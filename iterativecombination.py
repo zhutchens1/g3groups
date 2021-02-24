@@ -402,6 +402,11 @@ def HAMwrapper(galra, galdec, galcz, galmag, galgrpid, volume,  inputfilename=No
     halosigma : np.float64 array
          Theoretical velocity dispersion of each halo.
     """
+    galra=np.array(galra)
+    galdec=np.array(galdec)
+    galcz=np.array(galcz)
+    galmag=np.array(galmag)
+    galgrpid=np.array(galgrpid)
     deloutfile=(outputfilename==None)
     delinfile=(inputfilename==None)
     # Prepare inputs
@@ -503,3 +508,32 @@ def get_rproj_czdisp(galaxyra, galaxydec, galaxycz, galaxygrpid):
             vdisp[sel]=np.sqrt(Dz2/(nmembers-1))/(1.+czcen/cspeed)
     return rproj, vdisp
 
+
+def getmhoffset(delta1, delta2, borc1, borc2, cc):
+    """
+    Credit: Ella Castelloe & Katie Eckert
+    Adapted from Katie's code, using eqns from "Sample Variance Considerations for Cluster Surveys," Hu & Kravtsov (2003) ApJ, 584, 702
+    (astro-ph/0203169)
+    delta1 is overdensity of input, delta2 is overdensity of output -- for mock, delta1 = 200
+    borc = 1 if wrt background density, borc = 0 if wrt critical density
+    cc is concentration of halo- use cc=6
+    """
+    if borc1 == 0:
+        delta1 = delta1/0.3
+    if borc2 == 0:
+        delta2 = delta2/0.3
+    xin = 1./cc
+    f_1overc = (xin)**3. * (np.log(1. + (1./xin)) - (1. + xin)**(-1.))
+    f1 = delta1/delta2 * f_1overc
+    a1=0.5116
+    a2=-0.4283
+    a3=-3.13e-3
+    a4=-3.52e-5
+    p = a2 + a3*np.log(f1) + a4*(np.log(f1))**2.
+    x_f1 = (a1*f1**(2.*p) + (3./4.)**2.)**(-1./2.) + 2.*f1
+    r2overr1 = x_f1
+    m1overm2 = (delta1/delta2) * (1./r2overr1)**3. * (1./cc)**3.
+    return m1overm2
+
+def decayexp(x, a, b, c, d):
+    return np.abs(a)*np.exp(-1*np.abs(b)*x + c)+np.abs(d)
