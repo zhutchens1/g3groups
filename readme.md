@@ -55,11 +55,11 @@ At the end of step 1, we have a set of giant-only groups. All dwarfs have yet to
 ## Step 2: Associating Dwarf Galaxies to Giant-Only Groups
 <details>
 
-The next step is to associate dwarf galaxies into the giant-only groups. To make this algorithm compatible with surveys that are incomplete into the dwarf regime, we must avoid halo mass estimates in those datasets. Therefore, we use the individual relative projected radii and peculiar velocities of ECO giant galaxies to calibrate search boundaries for dwarfs. This calibration is obtained by fitting a curve to the outermost galaxy radii in bins of giant-only group N, and comparing this curve to the expected virial radii in ECO, for which we *know* is dwarf-complete. This calibration is shown in the plot below, and while a similar calibration is done in velocity, it is not shown here for brevity. We also note that this calibration is done separately for each group-finding sample, as the giant-only FoF groups are slightly different for each selection.
+The next step is to associate dwarf galaxies into the giant-only groups. To make this algorithm compatible with surveys that are incomplete into the dwarf regime, we must avoid halo mass estimates in those datasets. Therefore, we use the individual relative (to group center)  projected radii and peculiar velocities of ECO giant galaxies to calibrate search boundaries for dwarfs. This calibration is obtained by fitting a curve to the outermost galaxy radii in bins of giant-only group N, and comparing this curve to the expected virial radii in ECO, for which we *know* is dwarf-complete. This calibration is shown in the plot below, and while a similar calibration is done in velocity, it is not shown here for brevity. We also note that this calibration is done separately for each group-finding sample, as the giant-only FoF groups are slightly different for each selection.
 
 ![Group boundary calibration](images/rproj_calibration_assoc.jpg)
 
-The fit to medians, binned by giant-only group N, of the projected radii and velocities are shown in the blue line. The green dash-dotted line shows the optimal radii for associating dwarf galaxies, 3R<sub>proj</sub><sup>fit</sup> (or 4.5v<sub>proj</sub><sup>fit</sup> in velocity), because it is the radius that would enclose nearly-all giant galaxies if their groups were stacked at fixed N. Therefore, if a dwarf galaxy fills within  3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup> of a giant-only FoF group, we associate the dwarf as a group member. The cartoon below illustrates this concept. With this calibration from ECO in hand, we can apply it to other surveys for which the halo mass information does not exist. 
+The fit to medians, binned by giant-only group N, of the projected radii and velocities are shown in the blue line. The green dash-dotted line shows the optimal radii for associating dwarf galaxies, 3R<sub>proj</sub><sup>fit</sup> (or 4.5v<sub>proj</sub><sup>fit</sup> in velocity), because it is the radius that would enclose nearly-all giant galaxies if their groups were stacked at fixed N. Therefore, if a dwarf galaxy falls within  3R<sub>proj</sub><sup>fit</sup> and 4.5v<sub>proj</sub><sup>fit</sup> of a giant-only FoF group, we associate the dwarf as a group member. The cartoon below illustrates this concept. With this calibration from ECO in hand, we can apply it to other surveys for which the halo mass information does not exist. 
 
 <img src="images/assocdiagram2.jpeg" width="500" align='center'/>
 
@@ -76,10 +76,10 @@ With dwarf galaxies now associated to giant-only groups, we have a catalog of "g
  2. Use a k-d tree to identify pairs of nearest-neighbor potential groups.
  3. For every nearest-neighbor pair, check if the pair should be merged into a single group:
 *  Depending on the group finding selection, compute the integrated r-band absolute magnitude, integrated stellar mass, or integrated baryonic mass  of all member galaxies belonging to the pair. 
-*  Compute 99th percentile of relative projected radii and relative velocties of galaxies belonging to giant+dwarf groups of similar integrated luminosity or mass. These values are drawn from a fit as shown below.
+*  Compute 99th percentile of relative (to group center)  projected radii and relative velocties of galaxies belonging to giant+dwarf groups of similar integrated luminosity or mass. These values are drawn from a fit as shown below.
      <img src="images/itercombboundaries.jpeg"/> 
 * If all individual galaxies shared between the two potential groups can fit within those radii/velocities, we merge them together into a single group.
- 4. Repeat from (2) until the dwarf-only group catalog has converged, when the potential groups are no longer merging between interations.
+ 4. Repeat from (2) until the dwarf-only group catalog has converged, when the potential groups are no longer merging between iterations.
 
 After iterative combination has finished, we have a complete set of groups. The multiplicity function for luminosity-selected groups in ECO and RESOLVE-B is shown below.
 
@@ -87,10 +87,10 @@ After iterative combination has finished, we have a complete set of groups. The 
 
 </details>
 
-## Step 4: Assigning Halo Masses
+## Assigning Halo Masses
 <details>
 
-Now that groups are identified, we assign halo masses based on group-integrated luminosity or stellar mass, using the method described in Eckert et al. (2016). Despite the fact that this algorithm has been designed to *avoid* halo abundance matching, we are still able to reliably apply HAM to ECO and RESOLVE, because we know them to be complete and volume-limited. The results of abundance matching are shown in the figure below. To assign halo masses for RESOLVE-B, we performed abundance matching on a RESOLVE-B analog version ECO which extends down to the deeper completeness floor of RESOLVE-B, and then interpolated from that result. For surveys that are incomplete in the dwarf regime, we will be able to use the halo mass-grop luminosity relation from ECO to estimate group masses.
+Now that groups are identified, we assign halo masses based on group-integrated luminosity or stellar mass, using the method described in Eckert et al. (2016). Despite the fact that this algorithm has been designed to *avoid* halo abundance matching, we are still able to reliably apply HAM to ECO and RESOLVE, because we know them to be complete and volume-limited. The results of abundance matching are shown in the figure below. To assign halo masses for RESOLVE-B, we performed abundance matching on a RESOLVE-B analog version ECO which extends down to the deeper completeness floor of RESOLVE-B, and then interpolated from that result. For surveys that are incomplete in the dwarf regime, we will be able to use the halo mass-group luminosity relation from ECO to estimate group masses.
 
 <img src="images/hamLrrelation.jpeg"/>
 
