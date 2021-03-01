@@ -30,8 +30,11 @@ import iterativecombination as ic
 from smoothedbootstrap import smoothedbootstrap as sbs
 import sys
 
-def giantmodel(x, a, b, c, d):
-    return a*np.log(np.abs(b)*x+c)+d
+#def giantmodel(x, a, b, c, d):
+#    return a*np.log(np.abs(b)*x+c)+d
+
+def giantmodel(x, a, b):
+    return np.abs(a)*np.log(np.abs(b)*x+1)
 
 def decayexp(x, a, b, c, d):
     return np.abs(a)*np.exp(-1*np.abs(b)*x + c)+np.abs(d)
@@ -45,8 +48,8 @@ if __name__=='__main__':
     ####################################
     # Step 1: Read in obs data
     ####################################
-    ecodata = pd.read_csv("ECOdata_022321.csv")
-    resolvedata = pd.read_csv("RESOLVEdata_022321.csv")
+    ecodata = pd.read_csv("ECOdata_022521.csv")
+    resolvedata = pd.read_csv("RESOLVEdata_022521.csv")
     resolvebdata = resolvedata[resolvedata.f_b==1]
 
     ####################################
@@ -90,7 +93,7 @@ if __name__=='__main__':
     ####################################
     # Step 3: Giant-Only FOF
     ####################################
-    ecogiantsel = (ecoabsrmag<=-19.4) & (ecocz>2530.) & (ecocz<7470.)
+    ecogiantsel = (ecoabsrmag<=-19.4) & (ecocz>2530.) & (ecocz<8000.)
     # (a) compute sep values for eco giants
     ecovolume = 192351.36 # Mpc^3 with h=1 **
     meansep0 = (ecovolume/len(ecoabsrmag[ecogiantsel]))**(1/3.)
@@ -103,7 +106,7 @@ if __name__=='__main__':
     print("Median Residual of Separation Fit: {} Mpc/h".format(np.median(np.abs(ecogiantsep-ecogiantsepdata))))
 
     # (b) make an interpolation function use this for RESOLVE-B  
-    resbgiantsel = (resbabsrmag<=-19.4) & (resbcz>4250) & (resbcz<7250)
+    resbgiantsel = (resbabsrmag<=-19.4) & (resbcz>4250) & (resbcz<7300)
     resbgiantsep = meansepinterp(resbabsrmag[resbgiantsel])
 
     plt.figure()
@@ -161,11 +164,12 @@ if __name__=='__main__':
 
     #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
-    poptrproj, jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error, p0=[0.1, -2, 3, -0.1])
-    poptdvproj,jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error, p0=[160,6.5,45,-600]) 
+    poptrproj, jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error)#, p0=[0.1, -2, 3, -0.1])
+    poptdvproj,jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error)#, p0=[160,6.5,45,-600]) 
     rproj_boundary = lambda N: 3*giantmodel(N, *poptrproj) #3*(rprojslope*N+rprojint)
     vproj_boundary = lambda N: 4.5*giantmodel(N, *poptdvproj) #4.5*(dvprojslope*N+dvprojint)
-
+    assert ((rproj_boundary(1)>0) and (vproj_boundary(1)>0)), "Cannot extrapolate Rproj or Vproj to N=1"
+    
     # get virial radii from abundance matching to giant-only groups
     gihaloid, gilogmh, gir200, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecoabsrmag[ecogiantsel], ecog3grp[ecogiantsel],\
                                                                 ecovolume, inputfilename=None, outputfilename=None)
@@ -206,9 +210,9 @@ if __name__=='__main__':
     ####################################
     # Step 5: Association of Dwarfs
     ####################################
-    ecodwarfsel = (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.33) & (ecocz>2530) & (ecocz<7470)
-    resbdwarfsel = (resbabsrmag>-19.4) & (resbabsrmag<=-17.0) & (resbcz>4250) & (resbcz<7250)
-    resbana_dwarfsel = (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.0) & (ecocz>2530) & (ecocz<7470)    
+    ecodwarfsel = (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.33) & (ecocz>2530) & (ecocz<8000)
+    resbdwarfsel = (resbabsrmag>-19.4) & (resbabsrmag<=-17.0) & (resbcz>4250) & (resbcz<7300)
+    resbana_dwarfsel = (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.0) & (ecocz>2530) & (ecocz<8000)    
 
     resbgiantgrpra, resbgiantgrpdec, resbgiantgrpcz = fof.group_skycoords(resbradeg[resbgiantsel], resbdedeg[resbgiantsel], resbcz[resbgiantsel], resbgiantfofid)
     resbgiantgrpn = fof.multiplicity_function(resbgiantfofid, return_by_galaxy=True)
@@ -324,20 +328,20 @@ if __name__=='__main__':
     ###########################################################
     # Step 7: Iterative Combination of Dwarf Galaxies
     ###########################################################
-    assert (ecog3grp[(ecoabsrmag<=-19.4) & (ecocz<7470) & (ecocz>2530)]!=-99.).all(), "Not all giants are grouped."
+    assert (ecog3grp[(ecoabsrmag<=-19.4) & (ecocz<8000) & (ecocz>2530)]!=-99.).all(), "Not all giants are grouped."
     ecogrpnafterassoc = fof.multiplicity_function(ecog3grp, return_by_galaxy=True)
     resbgrpnafterassoc = fof.multiplicity_function(resbg3grp, return_by_galaxy=True)
     resbana_grpnafterassoc = fof.multiplicity_function(resbana_g3grp, return_by_galaxy=True)
 
-    eco_ungroupeddwarf_sel = (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.33) & (ecocz<7470) & (ecocz>2530) & (ecogrpnafterassoc==1)
+    eco_ungroupeddwarf_sel = (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.33) & (ecocz<8000) & (ecocz>2530) & (ecogrpnafterassoc==1)
     ecoitassocid = ic.iterative_combination(ecoradeg[eco_ungroupeddwarf_sel], ecodedeg[eco_ungroupeddwarf_sel], ecocz[eco_ungroupeddwarf_sel], ecoabsrmag[eco_ungroupeddwarf_sel],\
                                            rproj_for_iteration, vproj_for_iteration, starting_id=np.max(ecog3grp)+1, centermethod='arithmetic')
     
-    resb_ungroupeddwarf_sel = (resbabsrmag>-19.4) & (resbabsrmag<=-17.0) & (resbcz<7250) & (resbcz>4250) & (resbgrpnafterassoc==1)
+    resb_ungroupeddwarf_sel = (resbabsrmag>-19.4) & (resbabsrmag<=-17.0) & (resbcz<7300) & (resbcz>4250) & (resbgrpnafterassoc==1)
     resbitassocid = ic.iterative_combination(resbradeg[resb_ungroupeddwarf_sel], resbdedeg[resb_ungroupeddwarf_sel], resbcz[resb_ungroupeddwarf_sel], resbabsrmag[resb_ungroupeddwarf_sel],\
                                             rproj_for_iteration, vproj_for_iteration, starting_id=np.max(resbg3grp)+1, centermethod='arithmetic')
     
-    resbana_ungroupeddwarf_sel = (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.0) & (ecocz<7470) & (ecocz>2530) & (resbana_grpnafterassoc==1)
+    resbana_ungroupeddwarf_sel = (ecoabsrmag>-19.4) & (ecoabsrmag<=-17.0) & (ecocz<8000) & (ecocz>2530) & (resbana_grpnafterassoc==1)
     resbana_itassocid = ic.iterative_combination(ecoradeg[resbana_ungroupeddwarf_sel], ecodedeg[resbana_ungroupeddwarf_sel], ecocz[resbana_ungroupeddwarf_sel], ecoabsrmag[resbana_ungroupeddwarf_sel],\
                                                  rproj_for_iteration_resbana, vproj_for_iteration_resbana, starting_id=np.max(resbana_g3grp)+1, centermethod='arithmetic')
 
@@ -556,27 +560,3 @@ if __name__=='__main__':
     resolvedata['g3fc_l'] = resolveg3fc
     resolvedata['g3vdisp_l'] = resolveg3vdisp
     resolvedata.to_csv("RESOLVEdata_G3catalog_luminosity.csv", index=False)
-
-    
-
-
-     
-
-        
-    
-
-    
-
-
-  
-
-
- 
-     
-    
-
-  
-
-
- 
-

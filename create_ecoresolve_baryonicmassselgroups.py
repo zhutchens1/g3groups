@@ -13,7 +13,7 @@ The outline of this code is:
     (d) Perform giant-only FoF for RESOLVE-B, by interpolating the fit to obtain separations for RESOLVE-B.
 (4) From giant-only groups, fit model for individual giant projected radii and peculiar velocites, to use for association.
 (5) Associate dwarf galaxies to giant-only FoF groups for ECO and RESOLVE-B (note different selection floors for dwarfs).
-(6) Based on giant+dwarf groups, calibrate boundaries (as function of giant+dwarf integrated cold baryonic mass) for iterative combination
+(6) Based on giant+dwarf groups, calibrate boundaries (as function of giant+dwarf integrated baryonic mass) for iterative combination
 (7) Iterative combination on remaining ungrouped dwarf galaxies
 (8) halo mass assignment
 (9) Finalize arrays + output
@@ -30,8 +30,8 @@ import iterativecombination as ic
 from smoothedbootstrap import smoothedbootstrap as sbs
 import sys
 
-def giantmodel(x, a, b, c, d):
-    return a*np.log(np.abs(b)*x+c)+d
+def giantmodel(x, a, b):
+    return np.abs(a)*np.log(np.abs(b)*x+1)
 
 def exp(x, a, b, c, d):
     return np.abs(a)*np.exp(1*np.abs(b)*x + c)+np.abs(d)
@@ -45,13 +45,9 @@ if __name__=='__main__':
     ####################################
     # Step 1: Read in obs data
     ####################################
-    ecodata = pd.read_csv("ECOdata_022321.csv")
-    resolvedata = pd.read_csv("RESOLVEdata_022321.csv")
+    ecodata = pd.read_csv("ECOdata_022521.csv")
+    resolvedata = pd.read_csv("RESOLVEdata_022521.csv")
     resolvebdata = resolvedata[resolvedata.f_b==1]
-    
-    print(ecodata.logmgas)
-    sel = (ecodata.logmgas=='None')
-    print(ecodata[['dup', 'logmgas', 'logmstar', 'logmgas_a100']][sel])    
 
     ####################################
     # Step 2: Prepare arrays
@@ -63,10 +59,8 @@ if __name__=='__main__':
     ecodedeg = np.array(ecodata.dedeg)
     ecocz = np.array(ecodata.cz)
     ecologmstar = np.array(ecodata.logmstar)
-    ecologmgas = np.float64([float(j) for j in ecodata.logmgas])
-    for j in ecodata.logmgas:
-        print(type(j))
-    ecologmbary = np.log10(10**ecologmstar + 10**ecologmgas)
+    ecologmgas = np.array(ecodata.logmgas)
+    ecologmbary = np.log10(10.**ecologmstar+10.**ecologmgas)
     ecologmstar=None
     ecog3grp = np.full(ecosz, -99.) # id number of g3 group
     ecog3grpn = np.full(ecosz, -99.) # multiplicity of g3 group
@@ -83,8 +77,8 @@ if __name__=='__main__':
     resbdedeg = np.array(resolvebdata.dedeg)
     resbcz = np.array(resolvebdata.cz)
     resblogmstar = np.array(resolvebdata.logmstar)
-    resblogmgas = np.float64([float(j) for j in resolvebdata.logmgas])
-    resblogmbary = np.log10(10**resblogmstar + 10**resblogmgas)
+    resblogmgas = np.array(resolvebdata.logmgas)
+    resblogmbary = np.log10(10.**resblogmstar+10.**resblogmgas)
     resblogmstar=None
     resbg3grp = np.full(resbsz, -99.)
     resbg3grpn = np.full(resbsz, -99.)
@@ -96,12 +90,13 @@ if __name__=='__main__':
     ####################################
     # Step 3: Giant-Only FOF
     ####################################
-    ecogiantsel = (ecologmbary>=9.9) & (ecocz>2530.) & (ecocz<7470.)
+    ecogiantsel = (ecologmbary>=9.9) & (ecocz>2530.) & (ecocz<8000.)
     # (a) compute sep values for eco giants
     ecovolume = 192351.36 # Mpc^3 with h=1 **
     meansep0 = (ecovolume/len(ecologmbary[ecogiantsel]))**(1/3.)
     ecogiantmass = ecologmbary[ecogiantsel]
     ecogiantsepdata = np.array([(192351.36/len(ecogiantmass[ecogiantmass>=Ms]))**(1/3.) for Ms in ecogiantmass])
+    print(ecogiantsepdata)
     ecogiantsepdata = ecogiantsepdata*meansep0/np.median(ecogiantsepdata)
     poptsfit, pcovsfit = curve_fit(sepmodel, ecogiantmass, ecogiantsepdata)
     meansepinterp = lambda x: sepmodel(x, *poptsfit)
@@ -109,16 +104,16 @@ if __name__=='__main__':
     print("Median Residual of Separation Fit: {} Mpc/h".format(np.median(np.abs(ecogiantsep-ecogiantsepdata))))
 
     # (b) make an interpolation function use this for RESOLVE-B
-    resbgiantsel = (resblogmbary>=9.9) & (resbcz>4250) & (resbcz<7250)
+    resbgiantsel = (resblogmbary>=9.9) & (resbcz>4250) & (resbcz<7300)
     resbgiantsep = meansepinterp(resblogmbary[resbgiantsel])
 
     plt.figure()
     tx=np.linspace(9.9,12.5,100)
     plt.axhline(meansep0, label=r'Mean Separation of ECO Giant Galaxies, $s_0 = (V/N)^{1/3}$', color='k', linestyle='--')
     plt.plot(tx, meansepinterp(tx), label='Model Fit')
-    plt.plot(ecogiantmass, ecogiantsepdata, 'k.', alpha=1, label=r'ECO Giant Galaxies ($logMbary > 9.9$)')
-    plt.plot(resblogmbary[resbgiantsel], resbgiantsep, 'r^', alpha=0.4, label=r'RESOLVE-B Giant Galaxies (interpolated, $logMbary > 9.9$)')
-    plt.xlabel("Cold Baryonic Mass of Giant Galaxy")
+    plt.plot(ecogiantmass, ecogiantsepdata, 'k.', alpha=1, label=r'ECO Giant Galaxies ($logM* > 9.9$)')
+    plt.plot(resblogmbary[resbgiantsel], resbgiantsep, 'r^', alpha=0.4, label=r'RESOLVE-B Giant Galaxies (interpolated, $logM* > 9.9$)')
+    plt.xlabel("baryonic Mass of Giant Galaxy")
     plt.ylabel(r"$s_i$ - Separation used for Galaxy $i$ in Giant-Only FoF [Mpc/h]")
     plt.legend(loc='best')
     plt.show()
@@ -151,7 +146,7 @@ if __name__=='__main__':
     ##########################################
     ecogiantgrpra, ecogiantgrpdec, ecogiantgrpcz = fof.group_skycoords(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecogiantfofid)
     relvel = np.abs(ecogiantgrpcz - ecocz[ecogiantsel])
-    relprojdist = (ecogiantgrpcz + ecocz[ecogiantsel])/100. * ic.angular_separation(ecogiantgrpra, ecogiantgrpdec, ecoradeg[ecogiantsel], ecodedeg[ecogiantsel])/2.0
+    relprojdist = (ecogiantgrpcz + ecocz[ecogiantsel])/100. * np.sin(ic.angular_separation(ecogiantgrpra, ecogiantgrpdec, ecoradeg[ecogiantsel], ecodedeg[ecogiantsel])/2.0)
     ecogiantgrpn = fof.multiplicity_function(ecogiantfofid, return_by_galaxy=True)
     uniqecogiantgrpn, uniqindex = np.unique(ecogiantgrpn, return_index=True)
     keepcalsel = np.where(uniqecogiantgrpn>1)
@@ -164,10 +159,12 @@ if __name__=='__main__':
 
     #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
-    poptrproj, jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error, p0=[0.1, -2, 3, -0.1])
-    poptdvproj,jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error, p0=[160,6.5,45,-600])
+    poptrproj, jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error)
+    poptdvproj,jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error)#, p0=[160,6.5,45,-600])
     rproj_boundary = lambda N: 3*giantmodel(N, *poptrproj) #3*(rprojslope*N+rprojint)
     vproj_boundary = lambda N: 4.5*giantmodel(N, *poptdvproj) #4.5*(dvprojslope*N+dvprojint)
+    assert rproj_boundary(1)>0, "Rproj boundary fit can't be extrapolated to N=1"
+    assert vproj_boundary(1)>0, "dv proj boundary fit can't be extrapolated to N=1"
 
     # get virial radii from abundance matching to giant-only groups
     gihaloid, gilogmh, gir200, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecologmbary[ecogiantsel], ecog3grp[ecogiantsel],\
@@ -208,9 +205,9 @@ if __name__=='__main__':
     ####################################
     # Step 5: Association of Dwarfs
     ####################################
-    ecodwarfsel = (ecologmbary<9.9) & (ecologmbary>=9.4) & (ecocz>2530) & (ecocz<7470)
-    resbdwarfsel = (resblogmbary<9.9) & (resblogmbary>=9.1) & (resbcz>4250) & (resbcz<7250)
-    resbana_dwarfsel = (ecologmbary<9.9) & (ecologmbary>=9.1) & (ecocz>2530) & (ecocz<7470)
+    ecodwarfsel = (ecologmbary<9.9) & (ecologmbary>=9.4) & (ecocz>2530) & (ecocz<8000)
+    resbdwarfsel = (resblogmbary<9.9) & (resblogmbary>=9.1) & (resbcz>4250) & (resbcz<7300)
+    resbana_dwarfsel = (ecologmbary<9.9) & (ecologmbary>=9.1) & (ecocz>2530) & (ecocz<8000)
 
     resbgiantgrpra, resbgiantgrpdec, resbgiantgrpcz = fof.group_skycoords(resbradeg[resbgiantsel], resbdedeg[resbgiantsel], resbcz[resbgiantsel], resbgiantfofid)
     resbgiantgrpn = fof.multiplicity_function(resbgiantfofid, return_by_galaxy=True)
@@ -227,28 +224,29 @@ if __name__=='__main__':
     resbg3grp[resbdwarfsel] = resbdwarfassocid
     resbana_g3grp[resbana_dwarfsel] = resbana_dwarfassocid
 
+
     ###############################################
     # Step 6: Calibration for Iter. Combination
     ###############################################
     ecogdgrpn = fof.multiplicity_function(ecog3grp, return_by_galaxy=True)
+    #ecogdsel = np.logical_not((ecogdgrpn==1) & (ecologmbary>-19.4) & (ecog3grp>0)) # select galaxies that AREN'T ungrouped dwarfs
     ecogdsel = np.logical_not(np.logical_or(ecog3grp==-99., ((ecogdgrpn==1) & (ecologmbary<9.9) & (ecologmbary>=9.4))))
     ecogdgrpra, ecogdgrpdec, ecogdgrpcz = fof.group_skycoords(ecoradeg[ecogdsel], ecodedeg[ecogdsel], ecocz[ecogdsel], ecog3grp[ecogdsel])
     ecogdrelvel = np.abs(ecogdgrpcz - ecocz[ecogdsel])
-    ecogdrelprojdist = (ecogdgrpcz + ecocz[ecogdsel])/100. * ic.angular_separation(ecogdgrpra, ecogdgrpdec, ecoradeg[ecogdsel], ecodedeg[ecogdsel])/2.0
+    ecogdrelprojdist = (ecogdgrpcz + ecocz[ecogdsel])/100. * np.sin(ic.angular_separation(ecogdgrpra, ecogdgrpdec, ecoradeg[ecogdsel], ecodedeg[ecogdsel])/2.0)
     ecogdn = ecogdgrpn[ecogdsel]
     ecogdtotalmass = ic.get_int_mass(ecologmbary[ecogdsel], ecog3grp[ecogdsel])
 
-    massbins=np.arange(9.75,14,0.1)
+    massbins=np.arange(9.9,14,0.15)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmass<14))
     gdmedianrproj, massbinedges, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,99), bins=massbins)
     gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,99), bins=massbins)
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION:
-        #guess=None
-        guess = [ 5,5e-01,-7, 5e-10]
+        guess=None
     else:
-        guess = [ 4e+00, 5e-01, -8, -9e-09]
-    poptr, pcovr = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=guess)
+        guess= [-1,0.5,-6,0.01]#None#[1e-5, 0.4, 0.2, 1]
+    poptr, pcovr = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel])#, p0=guess)
     print("guess:", poptr)
     poptv, pcovv = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
 
@@ -257,7 +255,7 @@ if __name__=='__main__':
     plt.plot(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
     plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='99th percentile in bin')
     plt.plot(tx, exp(tx,*poptr))
-    plt.xlabel(r"Integrated Cold Baryonic Mass of Giant + Dwarf Members")
+    plt.xlabel(r"Integrated baryonic Mass of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
     plt.xlim(9.9,14)
@@ -269,23 +267,24 @@ if __name__=='__main__':
     plt.plot(massbinedges[:-1], gdmedianrelvel,'r^',label='Medians')
     plt.plot(tx, exp(tx, *poptv))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
-    plt.xlabel(r"Integrated Cold Baryonic Mass of Giant + Dwarf Members")
+    plt.xlabel(r"Integrated baryonic Mass of Giant + Dwarf Members")
     plt.show()
 
     rproj_for_iteration = lambda M: exp(M, *poptr)
     vproj_for_iteration = lambda M: exp(M, *poptv)
 
-    # --------------- now need to do this calibration for the RESOLVE-B analogue dataset, down to 9.1 Cold Baryonic mass) -------------$
+    # --------------- now need to do this calibration for the RESOLVE-B analogue dataset, down to 9.1 baryonic mass) -------------$
     resbana_gdgrpn = fof.multiplicity_function(resbana_g3grp, return_by_galaxy=True)
+    #resbana_gdsel = np.logical_not((resbana_gdgrpn==1) & (ecologmbary>-19.4) & (resbana_g3grp!=-99.) & (resbana_g3grp>0)) # select galaxies that AREN'T ungrouped dwarfs
     resbana_gdsel = np.logical_not(np.logical_or(resbana_g3grp==-99., ((resbana_gdgrpn==1) & (ecologmbary<9.9) & (ecologmbary>=9.1))))
     resbana_gdgrpra, resbana_gdgrpdec, resbana_gdgrpcz = fof.group_skycoords(ecoradeg[resbana_gdsel], ecodedeg[resbana_gdsel], ecocz[resbana_gdsel], resbana_g3grp[resbana_gdsel])
     resbana_gdrelvel = np.abs(resbana_gdgrpcz - ecocz[resbana_gdsel])
-    resbana_gdrelprojdist = (resbana_gdgrpcz + ecocz[resbana_gdsel])/100. * ic.angular_separation(resbana_gdgrpra, resbana_gdgrpdec, ecoradeg[resbana_gdsel], ecodedeg[resbana_gdsel])/2.0
+    resbana_gdrelprojdist = (resbana_gdgrpcz + ecocz[resbana_gdsel])/100. *np.sin(ic.angular_separation(resbana_gdgrpra, resbana_gdgrpdec, ecoradeg[resbana_gdsel], ecodedeg[resbana_gdsel])/2.0)
 
     resbana_gdn = resbana_gdgrpn[resbana_gdsel]
     resbana_gdtotalmass = ic.get_int_mass(ecologmbary[resbana_gdsel], resbana_g3grp[resbana_gdsel])
 
-    massbins2=np.arange(9.75,14,0.1)
+    massbins2=np.arange(9.9,14,0.15)
     binsel2 = np.where(np.logical_and(resbana_gdn>1, resbana_gdtotalmass>-24))
     gdmedianrproj, massbinedges, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,99), bins=massbins2)
     gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,99), bins=massbins2)
@@ -298,7 +297,7 @@ if __name__=='__main__':
     plt.plot(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups')
     plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='99th percentile in bin')
     plt.plot(tx, exp(tx,*poptr_resbana))
-    plt.xlabel(r"Integrated Cold Baryonic Mass of Giant + Dwarf Members")
+    plt.xlabel(r"Integrated baryonic Mass of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
     plt.xlim(9.1,14)
@@ -310,7 +309,7 @@ if __name__=='__main__':
     plt.plot(massbinedges[:-1], gdmedianrelvel,'r^',label='Medians')
     plt.plot(tx, exp(tx, *poptv_resbana))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
-    plt.xlabel(r"Integrated Cold Baryonic Mass of Giant + Dwarf Members")
+    plt.xlabel(r"Integrated baryonic Mass of Giant + Dwarf Members")
     plt.show()
 
     rproj_for_iteration_resbana = lambda M: exp(M, *poptr_resbana)
@@ -320,20 +319,20 @@ if __name__=='__main__':
     ###########################################################
     # Step 7: Iterative Combination of Dwarf Galaxies
     ###########################################################
-    assert (ecog3grp[(ecologmbary>9.9) & (ecocz<7470) & (ecocz>2530)]!=-99.).all(), "Not all giants are grouped."
+    assert (ecog3grp[(ecologmbary>9.9) & (ecocz<8000) & (ecocz>2530)]!=-99.).all(), "Not all giants are grouped."
     ecogrpnafterassoc = fof.multiplicity_function(ecog3grp, return_by_galaxy=True)
     resbgrpnafterassoc = fof.multiplicity_function(resbg3grp, return_by_galaxy=True)
     resbana_grpnafterassoc = fof.multiplicity_function(resbana_g3grp, return_by_galaxy=True)
 
-    eco_ungroupeddwarf_sel = (ecologmbary<9.9) & (ecologmbary>=9.4) & (ecocz<7470) & (ecocz>2530) & (ecogrpnafterassoc==1)
+    eco_ungroupeddwarf_sel = (ecologmbary<9.9) & (ecologmbary>=9.4) & (ecocz<8000) & (ecocz>2530) & (ecogrpnafterassoc==1)
     ecoitassocid = ic.iterative_combination(ecoradeg[eco_ungroupeddwarf_sel], ecodedeg[eco_ungroupeddwarf_sel], ecocz[eco_ungroupeddwarf_sel], ecologmbary[eco_ungroupeddwarf_sel],\
                                            rproj_for_iteration, vproj_for_iteration, starting_id=np.max(ecog3grp)+1, centermethod='arithmetic')
 
-    resb_ungroupeddwarf_sel = (resblogmbary<9.9) & (resblogmbary>=9.1) & (resbcz<7250) & (resbcz>4250) & (resbgrpnafterassoc==1)
+    resb_ungroupeddwarf_sel = (resblogmbary<9.9) & (resblogmbary>=9.1) & (resbcz<7300) & (resbcz>4250) & (resbgrpnafterassoc==1)
     resbitassocid = ic.iterative_combination(resbradeg[resb_ungroupeddwarf_sel], resbdedeg[resb_ungroupeddwarf_sel], resbcz[resb_ungroupeddwarf_sel], resblogmbary[resb_ungroupeddwarf_sel],\
                                             rproj_for_iteration, vproj_for_iteration, starting_id=np.max(resbg3grp)+1, centermethod='arithmetic')
 
-    resbana_ungroupeddwarf_sel = (ecologmbary<9.9) & (ecologmbary>=9.1) & (ecocz<7470) & (ecocz>2530) & (resbana_grpnafterassoc==1)
+    resbana_ungroupeddwarf_sel = (ecologmbary<9.9) & (ecologmbary>=9.1) & (ecocz<8000) & (ecocz>2530) & (resbana_grpnafterassoc==1)
     resbana_itassocid = ic.iterative_combination(ecoradeg[resbana_ungroupeddwarf_sel], ecodedeg[resbana_ungroupeddwarf_sel], ecocz[resbana_ungroupeddwarf_sel], ecologmbary[resbana_ungroupeddwarf_sel],\
                                                  rproj_for_iteration_resbana, vproj_for_iteration_resbana, starting_id=np.max(resbana_g3grp)+1, centermethod='arithmetic')
 
@@ -390,7 +389,7 @@ if __name__=='__main__':
     plt.plot(ecointmass, ecog3logmh[ecog3grp!=-99.], '.', color='palegreen', alpha=0.6, label='ECO', markersize=11)
     plt.plot(resbintmass, resbg3logmh[resbg3grp!=-99.], 'k.', alpha=1, label='RESOLVE-B', markersize=3)
     plt.plot
-    plt.xlabel("group-integrated log Cold Baryonic mass")
+    plt.xlabel("group-integrated log baryonic mass")
     plt.ylabel(r"group halo mass (log$M_\odot$)")
     plt.legend(loc='best')
     plt.show()
@@ -434,18 +433,18 @@ if __name__=='__main__':
     ecog3vdisp[outofsample]=-99.
     insample = ecog3grpn!=-99.
 
-    ecodata['g3grp_b'] = ecog3grp
-    ecodata['g3grpradeg_b'] = ecog3grpradeg
-    ecodata['g3grpdedeg_b'] = ecog3grpdedeg
-    ecodata['g3grpcz_b'] = ecog3grpcz
-    ecodata['g3grpndw_b'] = ecog3grpndw
-    ecodata['g3grpngi_b'] = ecog3grpngi
-    ecodata['g3logmh_b'] = ecog3logmh
-    ecodata['g3rvir_b'] = ecog3rvir
-    ecodata['g3rproj_b'] = ecog3rproj
-    ecodata['g3router_b'] = ecog3router
-    ecodata['g3fc_b'] = ecog3fc
-    ecodata['g3vdisp_b'] = ecog3vdisp
+    ecodata['g3grp_s'] = ecog3grp
+    ecodata['g3grpradeg_s'] = ecog3grpradeg
+    ecodata['g3grpdedeg_s'] = ecog3grpdedeg
+    ecodata['g3grpcz_s'] = ecog3grpcz
+    ecodata['g3grpndw_s'] = ecog3grpndw
+    ecodata['g3grpngi_s'] = ecog3grpngi
+    ecodata['g3logmh_s'] = ecog3logmh
+    ecodata['g3rvir_s'] = ecog3rvir
+    ecodata['g3rproj_s'] = ecog3rproj
+    ecodata['g3router_s'] = ecog3router
+    ecodata['g3fc_s'] = ecog3fc
+    ecodata['g3vdisp_s'] = ecog3vdisp
     ecodata.to_csv("ECOdata_G3catalog_baryonic.csv", index=False)
 
     # ------ now do RESOLVE
@@ -476,6 +475,7 @@ if __name__=='__main__':
             resbg3grpndw[grpsel] = len(dwsel[0])
 
     resbg3grpradeg, resbg3grpdedeg, resbg3grpcz = fof.group_skycoords(resbradeg, resbdedeg, resbcz, resbg3grp)
+    resbg3intmbary = ic.get_int_mass(resblogmbary, resbg3grp)
     resbg3rproj = fof.get_grprproj_e17(resbradeg, resbdedeg, resbcz, resbg3grp, h=0.7) / (resbg3grpcz/70.) * 206265 # in arcsec
     resbg3fc = fof.get_central_flag(resblogmbary, resbg3grp)
     resbg3router = fof.get_outermost_galradius(resbradeg, resbdedeg, resbcz, resbg3grp) # in arcsec
@@ -527,16 +527,16 @@ if __name__=='__main__':
         else:
             assert False, nm+" not in RESOLVE"
 
-    resolvedata['g3grp_b'] = resolveg3grp
-    resolvedata['g3grpngi_b'] = resolveg3grpngi
-    resolvedata['g3grpndw_b'] = resolveg3grpndw
-    resolvedata['g3grpradeg_b'] = resolveg3grpradeg
-    resolvedata['g3grpdedeg_b'] = resolveg3grpdedeg
-    resolvedata['g3grpcz_b'] = resolveg3grpcz
-    resolvedata['g3logmh_b'] = resolveg3logmh
-    resolvedata['g3rvir_b'] = resolveg3rvir
-    resolvedata['g3rproj_b'] = resolveg3rproj
-    resolvedata['g3router_b'] = resolveg3router
-    resolvedata['g3fc_b'] = resolveg3fc
-    resolvedata['g3vdisp_b'] = resolveg3vdisp
+    resolvedata['g3grp_s'] = resolveg3grp
+    resolvedata['g3grpngi_s'] = resolveg3grpngi
+    resolvedata['g3grpndw_s'] = resolveg3grpndw
+    resolvedata['g3grpradeg_s'] = resolveg3grpradeg
+    resolvedata['g3grpdedeg_s'] = resolveg3grpdedeg
+    resolvedata['g3grpcz_s'] = resolveg3grpcz
+    resolvedata['g3logmh_s'] = resolveg3logmh
+    resolvedata['g3rvir_s'] = resolveg3rvir
+    resolvedata['g3rproj_s'] = resolveg3rproj
+    resolvedata['g3router_s'] = resolveg3router
+    resolvedata['g3fc_s'] = resolveg3fc
+    resolvedata['g3vdisp_s'] = resolveg3vdisp
     resolvedata.to_csv("RESOLVEdata_G3catalog_baryonic.csv", index=False)
