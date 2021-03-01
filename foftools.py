@@ -338,7 +338,7 @@ def fast_faint_assoc(faintra, faintdec, faintcz, grpra, grpdec, grpcz, grpid, ra
     grp_cmvg = cosmo.comoving_transverse_distance(grpcz/SPEED_OF_LIGHT).value
 
     half_angle = np.arcsin((np.sin((fainttheta-grptheta)/2.0)**2.0 + np.sin(fainttheta)*np.sin(grptheta)*np.sin((faintphi-grpphi)/2.0)**2.0)**0.5)
-    Rp = (faint_cmvg + grp_cmvg) * (half_angle)
+    Rp = (faint_cmvg + grp_cmvg) * np.sin(half_angle)
     DeltaV = np.abs(faintcz[:,None] - grpcz)
 
     for gg in range(0,len(grpid)):
@@ -693,5 +693,6 @@ def sepmodel(x, a, b, c, d, e):
     #return a*(x**3)+b*(x**2)+c*x+d
     return a*(x**4)+b*(x**3)+c*(x**2)+(d*x)+e
 
-def giantmodel(x, a, b, c, d):
-    return a*np.log(np.abs(b)*x+c)+d
+def giantmodel(x, a, b):
+    return np.abs(a)*np.log(np.abs(b)*x+1)
+
