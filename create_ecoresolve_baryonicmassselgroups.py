@@ -433,18 +433,18 @@ if __name__=='__main__':
     ecog3vdisp[outofsample]=-99.
     insample = ecog3grpn!=-99.
 
-    ecodata['g3grp_s'] = ecog3grp
-    ecodata['g3grpradeg_s'] = ecog3grpradeg
-    ecodata['g3grpdedeg_s'] = ecog3grpdedeg
-    ecodata['g3grpcz_s'] = ecog3grpcz
-    ecodata['g3grpndw_s'] = ecog3grpndw
-    ecodata['g3grpngi_s'] = ecog3grpngi
-    ecodata['g3logmh_s'] = ecog3logmh
-    ecodata['g3rvir_s'] = ecog3rvir
-    ecodata['g3rproj_s'] = ecog3rproj
-    ecodata['g3router_s'] = ecog3router
-    ecodata['g3fc_s'] = ecog3fc
-    ecodata['g3vdisp_s'] = ecog3vdisp
+    ecodata['g3grp_b'] = ecog3grp
+    ecodata['g3grpradeg_b'] = ecog3grpradeg
+    ecodata['g3grpdedeg_b'] = ecog3grpdedeg
+    ecodata['g3grpcz_b'] = ecog3grpcz
+    ecodata['g3grpndw_b'] = ecog3grpndw
+    ecodata['g3grpngi_b'] = ecog3grpngi
+    ecodata['g3logmh_b'] = ecog3logmh
+    ecodata['g3rvir_b'] = ecog3rvir
+    ecodata['g3rproj_b'] = ecog3rproj
+    ecodata['g3router_b'] = ecog3router
+    ecodata['g3fc_b'] = ecog3fc
+    ecodata['g3vdisp_b'] = ecog3vdisp
     ecodata.to_csv("ECOdata_G3catalog_baryonic.csv", index=False)
 
     # ------ now do RESOLVE
@@ -527,16 +527,16 @@ if __name__=='__main__':
         else:
             assert False, nm+" not in RESOLVE"
 
-    resolvedata['g3grp_s'] = resolveg3grp
-    resolvedata['g3grpngi_s'] = resolveg3grpngi
-    resolvedata['g3grpndw_s'] = resolveg3grpndw
-    resolvedata['g3grpradeg_s'] = resolveg3grpradeg
-    resolvedata['g3grpdedeg_s'] = resolveg3grpdedeg
-    resolvedata['g3grpcz_s'] = resolveg3grpcz
-    resolvedata['g3logmh_s'] = resolveg3logmh
-    resolvedata['g3rvir_s'] = resolveg3rvir
-    resolvedata['g3rproj_s'] = resolveg3rproj
-    resolvedata['g3router_s'] = resolveg3router
-    resolvedata['g3fc_s'] = resolveg3fc
-    resolvedata['g3vdisp_s'] = resolveg3vdisp
+    resolvedata['g3grp_b'] = resolveg3grp
+    resolvedata['g3grpngi_b'] = resolveg3grpngi
+    resolvedata['g3grpndw_b'] = resolveg3grpndw
+    resolvedata['g3grpradeg_b'] = resolveg3grpradeg
+    resolvedata['g3grpdedeg_b'] = resolveg3grpdedeg
+    resolvedata['g3grpcz_b'] = resolveg3grpcz
+    resolvedata['g3logmh_b'] = resolveg3logmh
+    resolvedata['g3rvir_b'] = resolveg3rvir
+    resolvedata['g3rproj_b'] = resolveg3rproj
+    resolvedata['g3router_b'] = resolveg3router
+    resolvedata['g3fc_b'] = resolveg3fc
+    resolvedata['g3vdisp_b'] = resolveg3vdisp
     resolvedata.to_csv("RESOLVEdata_G3catalog_baryonic.csv", index=False)
