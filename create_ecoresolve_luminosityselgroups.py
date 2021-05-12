@@ -201,7 +201,7 @@ if __name__=='__main__':
     plt.xlabel("Number of Giant Members in Galaxy's Group")
     plt.ylabel("Projected Distance from Giant to Group Center [Mpc/h]")
     plt.legend(loc='best')
-    #plt.xlim(0,20)
+    plt.xlim(0,20)
     #plt.ylim(0,2.5)
     #plt.xticks(np.arange(0,22,2))
     plt.savefig("images/rproj_calibration_assoc.jpg")
