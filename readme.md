@@ -13,8 +13,8 @@ We provide galaxy catalogs containing group information from three group-finding
 * `g3grpradeg_*`: right-ascension of group center in decimal degrees
 * `g3grpdedeg_*`: declination of group center in decimal degrees
 * `g3grpcz_*`: Local Group-corrected velocity of group center in km/s
-* `g3logmh_*`: abundance-matched log halo mass (m200b) assuming h=0.7
-* `g3rvir_*`: theoretical group virial radius, in arcseconds, from halo mass (337b convention, i.e. NOT r200b)
+* `g3logmh_*`: abundance-matched log halo mass (m280b) assuming h=0.7
+* `g3rvir_*`: theoretical group virial radius, in arcseconds, from halo mass (337b convention, i.e. NOT r280b)
 * `g3rproj_*`: observational group projected radius, in arcseconds, calculated as 75th percentile radius of giant and dwarf members
 * `g3router_*`: distance to outermost group member, in arcseconds, from the group center
 * `g3fc_*`: 1/0 central flag, defined as the most luminous or massive group galaxy.
