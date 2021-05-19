@@ -22,7 +22,7 @@ The outline of this code is:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d, CubicSpline
+from scipy.interpolate import interp1d, UnivariateSpline
 from scipy.optimize import curve_fit
 from scipy.stats import binned_statistic
 import foftools as fof
@@ -98,8 +98,11 @@ if __name__=='__main__':
     ecogiantsepdata = np.array([(192351.36/len(ecogiantmass[ecogiantmass>=Ms]))**(1/3.) for Ms in ecogiantmass])
     print(ecogiantsepdata)
     ecogiantsepdata = ecogiantsepdata*meansep0/np.median(ecogiantsepdata)
-    poptsfit, pcovsfit = curve_fit(sepmodel, ecogiantmass, ecogiantsepdata)
-    meansepinterp = lambda x: sepmodel(x, *poptsfit)
+    #poptsfit, pcovsfit = curve_fit(sepmodel, ecogiantmass, ecogiantsepdata)
+    #meansepinterp = lambda x: sepmodel(x, *poptsfit)
+    #ecogiantsep = meansepinterp(ecogiantmass)
+    meansepinterp = UnivariateSpline(np.sort(ecogiantmass), ecogiantsepdata[np.argsort(ecogiantmass)])
+    meansepinterp.set_smoothing_factor(100)
     ecogiantsep = meansepinterp(ecogiantmass)
     print("Median Residual of Separation Fit: {} Mpc/h".format(np.median(np.abs(ecogiantsep-ecogiantsepdata))))
 
@@ -116,6 +119,8 @@ if __name__=='__main__':
     plt.xlabel("baryonic Mass of Giant Galaxy")
     plt.ylabel(r"$s_i$ - Separation used for Galaxy $i$ in Giant-Only FoF [Mpc/h]")
     plt.legend(loc='best')
+    plt.xlim(9.5,13)
+    plt.ylim(0,75)
     plt.show()
 
     # (c) perform giant-only FoF on ECO
@@ -167,9 +172,9 @@ if __name__=='__main__':
     assert vproj_boundary(1)>0, "dv proj boundary fit can't be extrapolated to N=1"
 
     # get virial radii from abundance matching to giant-only groups
-    gihaloid, gilogmh, gir200, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecologmbary[ecogiantsel], ecog3grp[ecogiantsel],\
+    gihaloid, gilogmh, gir280, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecologmbary[ecogiantsel], ecog3grp[ecogiantsel],\
                                                                 ecovolume, inputfilename=None, outputfilename=None)
-    gihalorvir = (3*(10**gilogmh / fof.getmhoffset(200,337,1,1,6)) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
+    gihalorvir = (3*(10**gilogmh / fof.getmhoffset(280,337,1,1,6)) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
     gihalon = fof.multiplicity_function(np.sort(ecog3grp[ecogiantsel]), return_by_galaxy=False)
     plt.figure()
     plt.plot(gihalon, gihalorvir, 'k.')
@@ -239,27 +244,27 @@ if __name__=='__main__':
 
     massbins=np.arange(9.9,14,0.15)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmass<14))
-    gdmedianrproj, massbinedges, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,99), bins=massbins)
-    gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,99), bins=massbins)
+    gdmedianrproj, massbinedges, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,95), bins=massbins)
+    gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,95), bins=massbins)
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION:
         guess=None
     else:
         guess= [-1,0.5,-6,0.01]#None#[1e-5, 0.4, 0.2, 1]
-    poptr, pcovr = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel])#, p0=guess)
+    poptr, pcovr = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], sigma=7.4**massbinedges[:-1][~nansel])#, p0=guess)
     print("guess:", poptr)
-    poptv, pcovv = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
+    poptv, pcovv = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1], sigma=massbinedges[:-1][~nansel])
 
     tx = np.linspace(7,15,100)
     plt.figure()
     plt.plot(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='99th percentile in bin')
+    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='95th percentile in bin')
     plt.plot(tx, exp(tx,*poptr))
     plt.xlabel(r"Integrated baryonic Mass of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
-    plt.xlim(9.9,14)
-    #plt.ylim(0,1.3)
+    plt.xlim(9.9,13)
+    plt.ylim(0,3)
     plt.show()
 
     plt.figure()
@@ -268,6 +273,8 @@ if __name__=='__main__':
     plt.plot(tx, exp(tx, *poptv))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated baryonic Mass of Giant + Dwarf Members")
+    plt.xlim(9.9,13.2)
+    plt.ylim(0,2000)
     plt.show()
 
     rproj_for_iteration = lambda M: exp(M, *poptr)
@@ -286,22 +293,22 @@ if __name__=='__main__':
 
     massbins2=np.arange(9.9,14,0.15)
     binsel2 = np.where(np.logical_and(resbana_gdn>1, resbana_gdtotalmass>-24))
-    gdmedianrproj, massbinedges, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,99), bins=massbins2)
-    gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,99), bins=massbins2)
+    gdmedianrproj, massbinedges, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,95), bins=massbins2)
+    gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,95), bins=massbins2)
     nansel = np.isnan(gdmedianrproj)
-    poptr_resbana, jk = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=poptr)
+    poptr_resbana, jk = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=poptr, sigma=2**massbinedges[:-1][~nansel])
     poptv_resbana, jk = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
 
     tx = np.linspace(7,15)
     plt.figure()
     plt.plot(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='99th percentile in bin')
+    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='95th percentile in bin')
     plt.plot(tx, exp(tx,*poptr_resbana))
     plt.xlabel(r"Integrated baryonic Mass of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
-    plt.xlim(9.1,14)
-    #plt.ylim(0,1.3)
+    plt.xlim(9.9,13.2)
+    plt.ylim(0,3)
     plt.show()
 
     plt.figure()
@@ -310,6 +317,8 @@ if __name__=='__main__':
     plt.plot(tx, exp(tx, *poptv_resbana))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated baryonic Mass of Giant + Dwarf Members")
+    plt.xlim(9.9,13.2)
+    plt.ylim(0,2000)
     plt.show()
 
     rproj_for_iteration_resbana = lambda M: exp(M, *poptr_resbana)
@@ -378,11 +387,11 @@ if __name__=='__main__':
     halomass = halomass-np.log10(0.7)
     for i,idv in enumerate(haloid):
         sel = np.where(ecog3grp==idv)
-        ecog3logmh[sel] = halomass[i] # m200b
+        ecog3logmh[sel] = halomass[i] # m280b
 
     # calculate Rvir in arcsec
-    ecog3rvir = (3*(10**ecog3logmh / fof.getmhoffset(200,337,1,1,6)) / (4*np.pi*337*0.3*1.36e11) )**(1/3.)
-    resbg3rvir = (3*(10**resbg3logmh / fof.getmhoffset(200,377,1,1,6)) / (4*np.pi*337*0.3*1.36e11))**(1/3.)
+    ecog3rvir = (3*(10**ecog3logmh / fof.getmhoffset(280,337,1,1,6)) / (4*np.pi*337*0.3*1.36e11) )**(1/3.)
+    resbg3rvir = (3*(10**resbg3logmh / fof.getmhoffset(280,377,1,1,6)) / (4*np.pi*337*0.3*1.36e11))**(1/3.)
 
     ecointmass = ic.get_int_mass(ecologmbary[ecohamsel], ecog3grp[ecohamsel])
     plt.figure()

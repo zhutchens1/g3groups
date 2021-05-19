@@ -22,13 +22,14 @@ The outline of this code is:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d, CubicSpline
+from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 from scipy.stats import binned_statistic
 import foftools as fof
 import iterativecombination as ic
 from smoothedbootstrap import smoothedbootstrap as sbs
 import sys
+from scipy.interpolate import UnivariateSpline
 
 #def giantmodel(x, a, b, c, d):
 #    return a*np.log(np.abs(b)*x+c)+d
@@ -37,7 +38,7 @@ def giantmodel(x, a, b):
     return np.abs(a)*np.log(np.abs(b)*x+1)
 
 def exp(x, a, b, c, d):
-    return np.abs(a)*np.exp(1*np.abs(b)*x + c)+np.abs(d)
+    return np.abs(a)*np.exp(1*np.abs(b)*(x) + c)+np.abs(d)
 
 def sepmodel(x, a, b, c, d, e):
     #return np.abs(a)*np.exp(-1*np.abs(b)*x + c)+d
@@ -96,8 +97,11 @@ if __name__=='__main__':
     ecogiantmass = ecologmstar[ecogiantsel]
     ecogiantsepdata = np.array([(192351.36/len(ecogiantmass[ecogiantmass>=Ms]))**(1/3.) for Ms in ecogiantmass])
     ecogiantsepdata = ecogiantsepdata*meansep0/np.median(ecogiantsepdata)
-    poptsfit, pcovsfit = curve_fit(sepmodel, ecogiantmass, ecogiantsepdata)
-    meansepinterp = lambda x: sepmodel(x, *poptsfit)
+    #poptsfit, pcovsfit = curve_fit(sepmodel, ecogiantmass, ecogiantsepdata)
+    #meansepinterp = lambda x: sepmodel(x, *poptsfit)
+    #ecogiantsep = meansepinterp(ecogiantmass)
+    meansepinterp = UnivariateSpline(np.sort(ecogiantmass), ecogiantsepdata[np.argsort(ecogiantmass)])
+    meansepinterp.set_smoothing_factor(150)
     ecogiantsep = meansepinterp(ecogiantmass)
     print("Median Residual of Separation Fit: {} Mpc/h".format(np.median(np.abs(ecogiantsep-ecogiantsepdata))))
 
@@ -164,9 +168,9 @@ if __name__=='__main__':
     assert ((rproj_boundary(1)>0) and (vproj_boundary(1)>0)), "Cannot extrapolate Rproj_fit or dv_proj_fit to N=1"
 
     # get virial radii from abundance matching to giant-only groups
-    gihaloid, gilogmh, gir200, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecologmstar[ecogiantsel], ecog3grp[ecogiantsel],\
+    gihaloid, gilogmh, gir280, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecologmstar[ecogiantsel], ecog3grp[ecogiantsel],\
                                                                 ecovolume, inputfilename=None, outputfilename=None)
-    gihalorvir = (3*(10**gilogmh / fof.getmhoffset(200,337,1,1,6)) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
+    gihalorvir = (3*(10**gilogmh / fof.getmhoffset(280,337,1,1,6)) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
     gihalon = fof.multiplicity_function(np.sort(ecog3grp[ecogiantsel]), return_by_galaxy=False)
     plt.figure()
     plt.plot(gihalon, gihalorvir, 'k.')
@@ -225,8 +229,8 @@ if __name__=='__main__':
     # Step 6: Calibration for Iter. Combination
     ###############################################
     ecogdgrpn = fof.multiplicity_function(ecog3grp, return_by_galaxy=True)
-    #ecogdsel = np.logical_not((ecogdgrpn==1) & (ecologmstar>-19.4) & (ecog3grp>0)) # select galaxies that AREN'T ungrouped dwarfs
-    ecogdsel = np.logical_not(np.logical_or(ecog3grp==-99., ((ecogdgrpn==1) & (ecologmstar<9.5) & (ecologmstar>=8.9))))
+    #ecogdsel = np.logical_not((ecogdgrpn==1) & (ecologmstar<9.5) & (ecog3grp>0)) # select galaxies that AREN'T ungrouped dwarfs
+    ecogdsel = np.logical_and(np.logical_not(np.logical_or(ecog3grp==-99., ((ecogdgrpn==1) & (ecologmstar<9.5) & (ecologmstar>=8.9)))), (ecogdgrpn>1))
     ecogdgrpra, ecogdgrpdec, ecogdgrpcz = fof.group_skycoords(ecoradeg[ecogdsel], ecodedeg[ecogdsel], ecocz[ecogdsel], ecog3grp[ecogdsel])
     ecogdrelvel = np.abs(ecogdgrpcz - ecocz[ecogdsel])
     ecogdrelprojdist = (ecogdgrpcz + ecocz[ecogdsel])/100. * ic.angular_separation(ecogdgrpra, ecogdgrpdec, ecoradeg[ecogdsel], ecodedeg[ecogdsel])/2.0
@@ -235,27 +239,29 @@ if __name__=='__main__':
 
     massbins=np.arange(9.75,14,0.1)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmass<14))
-    gdmedianrproj, massbinedges, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,99), bins=massbins)
-    gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,99), bins=massbins)
+    gdmedianrproj, massbinedges, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,95), bins=massbins) 
+    gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,95), bins=massbins)
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION:
         guess=None
+        #guess=[-1,0.5,-6,0.01]
     else:
         guess= [-1,0.5,-6,0.01]#None#[1e-5, 0.4, 0.2, 1]
-    poptr, pcovr = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=guess)
+    poptr, pcovr = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=guess, maxfev=2000, sigma=10**massbinedges[:-1][~nansel])
     print("guess:", poptr)
-    poptv, pcovv = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
+    poptv, pcovv = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1], maxfev=2000)
 
     tx = np.linspace(7,15,100)
     plt.figure()
+    plt.axhline(0)
     plt.plot(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='99th percentile in bin')
+    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='95th percentile in bin')
     plt.plot(tx, exp(tx,*poptr))
     plt.xlabel(r"Integrated Stellar Mass of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
-    plt.xlim(9.5,14)
-    #plt.ylim(0,1.3)
+    plt.xlim(9.5,13.2)
+    plt.ylim(0,3)
     plt.show()
 
     plt.figure()
@@ -264,6 +270,8 @@ if __name__=='__main__':
     plt.plot(tx, exp(tx, *poptv))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated Stellar Mass of Giant + Dwarf Members")
+    plt.xlim(9.5,13)
+    plt.ylim(0,2000)
     plt.show()
 
     rproj_for_iteration = lambda M: exp(M, *poptr)
@@ -272,7 +280,7 @@ if __name__=='__main__':
     # --------------- now need to do this calibration for the RESOLVE-B analogue dataset, down to 8.7 stellar mass) -------------$
     resbana_gdgrpn = fof.multiplicity_function(resbana_g3grp, return_by_galaxy=True)
     #resbana_gdsel = np.logical_not((resbana_gdgrpn==1) & (ecologmstar>-19.4) & (resbana_g3grp!=-99.) & (resbana_g3grp>0)) # select galaxies that AREN'T ungrouped dwarfs
-    resbana_gdsel = np.logical_not(np.logical_or(resbana_g3grp==-99., ((resbana_gdgrpn==1) & (ecologmstar<9.5) & (ecologmstar>=8.7))))
+    resbana_gdsel = np.logical_and(np.logical_not(np.logical_or(resbana_g3grp==-99., ((resbana_gdgrpn==1) & (ecologmstar<9.5) & (ecologmstar>=8.7)))), (resbana_gdgrpn>2))
     resbana_gdgrpra, resbana_gdgrpdec, resbana_gdgrpcz = fof.group_skycoords(ecoradeg[resbana_gdsel], ecodedeg[resbana_gdsel], ecocz[resbana_gdsel], resbana_g3grp[resbana_gdsel])
     resbana_gdrelvel = np.abs(resbana_gdgrpcz - ecocz[resbana_gdsel])
     resbana_gdrelprojdist = (resbana_gdgrpcz + ecocz[resbana_gdsel])/100. * ic.angular_separation(resbana_gdgrpra, resbana_gdgrpdec, ecoradeg[resbana_gdsel], ecodedeg[resbana_gdsel])/2.0
@@ -282,22 +290,22 @@ if __name__=='__main__':
 
     massbins2=np.arange(9.75,14,0.1)
     binsel2 = np.where(np.logical_and(resbana_gdn>1, resbana_gdtotalmass>-24))
-    gdmedianrproj, massbinedges, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,99), bins=massbins2)
-    gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,99), bins=massbins2)
+    gdmedianrproj, massbinedges, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,95), bins=massbins2)
+    gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,95), bins=massbins2)
     nansel = np.isnan(gdmedianrproj)
-    poptr_resbana, jk = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=poptr)
-    poptv_resbana, jk = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
+    poptr_resbana, jk = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=poptr, sigma=10**massbinedges[:-1][~nansel])
+    poptv_resbana, jk = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=poptv, sigma=massbinedges[:-1][~nansel])#[3e-5,4e-1,5e-03,1])
 
     tx = np.linspace(7,15)
     plt.figure()
     plt.plot(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='99th percentile in bin')
+    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='95th percentile in bin')
     plt.plot(tx, exp(tx,*poptr_resbana))
     plt.xlabel(r"Integrated Stellar Mass of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
-    plt.xlim(8.7,14)
-    #plt.ylim(0,1.3)
+    plt.xlim(9.5,13)
+    plt.ylim(0,3)
     plt.show()
 
     plt.figure()
@@ -306,6 +314,8 @@ if __name__=='__main__':
     plt.plot(tx, exp(tx, *poptv_resbana))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated Stellar Mass of Giant + Dwarf Members")
+    plt.xlim(9.5,13)
+    plt.ylim(0,2000)
     plt.show()
 
     rproj_for_iteration_resbana = lambda M: exp(M, *poptr_resbana)
@@ -374,11 +384,11 @@ if __name__=='__main__':
     halomass = halomass-np.log10(0.7)
     for i,idv in enumerate(haloid):
         sel = np.where(ecog3grp==idv)
-        ecog3logmh[sel] = halomass[i] # m200b
+        ecog3logmh[sel] = halomass[i] # m280b
 
     # calculate Rvir in arcsec
-    ecog3rvir = (3*(10**ecog3logmh / fof.getmhoffset(200,337,1,1,6)) / (4*np.pi*337*0.3*1.36e11) )**(1/3.)
-    resbg3rvir = (3*(10**resbg3logmh / fof.getmhoffset(200,377,1,1,6)) / (4*np.pi*337*0.3*1.36e11))**(1/3.)
+    ecog3rvir = (3*(10**ecog3logmh / fof.getmhoffset(280,337,1,1,6)) / (4*np.pi*337*0.3*1.36e11) )**(1/3.)
+    resbg3rvir = (3*(10**resbg3logmh / fof.getmhoffset(280,377,1,1,6)) / (4*np.pi*337*0.3*1.36e11))**(1/3.)
 
     ecointmass = ic.get_int_mass(ecologmstar[ecohamsel], ecog3grp[ecohamsel])
     plt.figure()

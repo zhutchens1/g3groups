@@ -22,12 +22,13 @@ The outline of this code is:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d, CubicSpline
+from scipy.interpolate import interp1d 
 from scipy.optimize import curve_fit
 from scipy.stats import binned_statistic
 import foftools as fof
 import iterativecombination as ic
 from smoothedbootstrap import smoothedbootstrap as sbs
+from scipy.interpolate import UnivariateSpline
 import sys
 
 #def giantmodel(x, a, b, c, d):
@@ -100,8 +101,11 @@ if __name__=='__main__':
     ecogiantmags = ecoabsrmag[ecogiantsel]
     ecogiantsepdata = np.array([(192351.36/len(ecogiantmags[ecogiantmags<=Mr]))**(1/3.) for Mr in ecogiantmags])
     ecogiantsepdata = ecogiantsepdata*meansep0/np.median(ecogiantsepdata)
-    poptsfit, pcovsfit = curve_fit(sepmodel, ecogiantmags, ecogiantsepdata) 
-    meansepinterp = lambda x: sepmodel(x, *poptsfit) 
+    #poptsfit, pcovsfit = curve_fit(sepmodel, ecogiantmags, ecogiantsepdata) 
+    #meansepinterp = lambda x: sepmodel(x, *poptsfit) 
+    #ecogiantsep = meansepinterp(ecogiantmags)
+    meansepinterp = UnivariateSpline(np.sort(ecogiantmags), ecogiantsepdata[np.argsort(ecogiantmags)])
+    meansepinterp.set_smoothing_factor(100)
     ecogiantsep = meansepinterp(ecogiantmags)
     print("Median Residual of Separation Fit: {} Mpc/h".format(np.median(np.abs(ecogiantsep-ecogiantsepdata))))
 
@@ -118,6 +122,8 @@ if __name__=='__main__':
     plt.xlabel("Absolute $M_r$ of Giant Galaxy")
     plt.ylabel(r"$s_i$ - Separation used for Galaxy $i$ in Giant-Only FoF [Mpc/h]")
     plt.legend(loc='best')
+    plt.xlim(-24,-19)
+    plt.ylim(0,70)
     plt.gca().invert_xaxis()
     plt.savefig("images/meansep_M_r_plot.jpg")
     plt.show()
@@ -171,9 +177,9 @@ if __name__=='__main__':
     assert ((rproj_boundary(1)>0) and (vproj_boundary(1)>0)), "Cannot extrapolate Rproj or Vproj to N=1"
     
     # get virial radii from abundance matching to giant-only groups
-    gihaloid, gilogmh, gir200, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecoabsrmag[ecogiantsel], ecog3grp[ecogiantsel],\
+    gihaloid, gilogmh, gir280b, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecoabsrmag[ecogiantsel], ecog3grp[ecogiantsel],\
                                                                 ecovolume, inputfilename=None, outputfilename=None)
-    gihalorvir = (3*(10**gilogmh / fof.getmhoffset(200,337,1,1,6)) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
+    gihalorvir = (3*(10**gilogmh / fof.getmhoffset(280,337,1,1,6)) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
     gihalon = fof.multiplicity_function(np.sort(ecog3grp[ecogiantsel]), return_by_galaxy=False)
     plt.figure()
     plt.plot(gihalon, gihalorvir, 'k.')
@@ -243,8 +249,8 @@ if __name__=='__main__':
    
     magbins=np.arange(-24,-19,0.25)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmag>-24))
-    gdmedianrproj, magbinedges, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,99), bins=magbins)
-    gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,99), bins=magbins)
+    gdmedianrproj, magbinedges, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,95), bins=magbins)
+    gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmag[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,95), bins=magbins)
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION: 
         guess=None
@@ -257,7 +263,7 @@ if __name__=='__main__':
     tx = np.linspace(-27,-17,100)
     plt.figure()
     plt.plot(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(magbinedges[:-1], gdmedianrproj, 'r^', label='99th percentile in bin')
+    plt.plot(magbinedges[:-1], gdmedianrproj, 'r^', label='95th percentile in bin')
     plt.plot(tx, decayexp(tx,*poptr))
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
@@ -293,8 +299,8 @@ if __name__=='__main__':
 
     magbins2=np.arange(-24,-19,0.25)
     binsel2 = np.where(np.logical_and(resbana_gdn>1, resbana_gdtotalmag>-24))
-    gdmedianrproj, magbinedges, jk = binned_statistic(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,99), bins=magbins2)
-    gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,99), bins=magbins2)
+    gdmedianrproj, magbinedges, jk = binned_statistic(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,95), bins=magbins2)
+    gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,95), bins=magbins2)
     nansel = np.isnan(gdmedianrproj)
     poptr_resbana, jk = curve_fit(decayexp, magbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=poptr)
     poptv_resbana, jk = curve_fit(decayexp, magbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
@@ -302,7 +308,7 @@ if __name__=='__main__':
     tx = np.linspace(-27,-16,100)
     plt.figure()
     plt.plot(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(magbinedges[:-1], gdmedianrproj, 'r^', label='99th percentile in bin')
+    plt.plot(magbinedges[:-1], gdmedianrproj, 'r^', label='95th percentile in bin')
     plt.plot(tx, decayexp(tx,*poptr_resbana))
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
@@ -387,11 +393,11 @@ if __name__=='__main__':
     halomass = halomass-np.log10(0.7)
     for i,idv in enumerate(haloid):
         sel = np.where(ecog3grp==idv)
-        ecog3logmh[sel] = halomass[i] # m200b
+        ecog3logmh[sel] = halomass[i] # m280b
     
     # calculate Rvir in arcsec
-    ecog3rvir = (3*(10**ecog3logmh / fof.getmhoffset(200,337,1,1,6)) / (4*np.pi*337*0.3*1.36e11) )**(1/3.)#/(ecog3grpcz/70.) * 206265
-    resbg3rvir = (3*(10**resbg3logmh / fof.getmhoffset(200,377,1,1,6)) / (4*np.pi*337*0.3*1.36e11))**(1/3.)#/(resbg3grpcz/70.) * 206265
+    ecog3rvir = (3*(10**ecog3logmh / fof.getmhoffset(280,337,1,1,6)) / (4*np.pi*337*0.3*1.36e11) )**(1/3.)#/(ecog3grpcz/70.) * 206265
+    resbg3rvir = (3*(10**resbg3logmh / fof.getmhoffset(280,377,1,1,6)) / (4*np.pi*337*0.3*1.36e11))**(1/3.)#/(resbg3grpcz/70.) * 206265
 
     ecointmag = ic.get_int_mag(ecoabsrmag[ecohamsel], ecog3grp[ecohamsel])
     plt.figure()
