@@ -174,7 +174,8 @@ if __name__=='__main__':
     # get virial radii from abundance matching to giant-only groups
     gihaloid, gilogmh, gir280, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecologmbary[ecogiantsel], ecog3grp[ecogiantsel],\
                                                                 ecovolume, inputfilename=None, outputfilename=None)
-    gihalorvir = (3*(10**gilogmh / fof.getmhoffset(280,337,1,1,6)) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
+    gilogmh = np.log10(10**gilogmh/fof.getmhoffset(280,337,1,1,6))
+    gihalorvir = (3*(10**gilogmh) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
     gihalon = fof.multiplicity_function(np.sort(ecog3grp[ecogiantsel]), return_by_galaxy=False)
     plt.figure()
     plt.plot(gihalon, gihalorvir, 'k.')
@@ -370,6 +371,7 @@ if __name__=='__main__':
     resbana_hamsel = (resbana_g3grp!=-99.)
     resbana_haloid, resbana_halomass, jk, jk = ic.HAMwrapper(ecoradeg[resbana_hamsel], ecodedeg[resbana_hamsel], ecocz[resbana_hamsel], ecologmbary[resbana_hamsel], resbana_g3grp[resbana_hamsel],\
                                                                 ecovolume, inputfilename=None, outputfilename=None)
+    resbana_halomass = np.log10(10**resbana_halomass/fof.getmhoffset(280,337,1,1,6))
     junk, uniqindex = np.unique(resbana_g3grp[resbana_hamsel], return_index=True)
     resbana_intmass = ic.get_int_mass(ecologmbary[resbana_hamsel], resbana_g3grp[resbana_hamsel])[uniqindex]
     sortind = np.argsort(resbana_intmass)
@@ -383,15 +385,16 @@ if __name__=='__main__':
     ecohamsel = (ecog3grp!=-99.)
     haloid, halomass, junk, junk = ic.HAMwrapper(ecoradeg[ecohamsel], ecodedeg[ecohamsel], ecocz[ecohamsel], ecologmbary[ecohamsel], ecog3grp[ecohamsel],\
                                                      ecovolume, inputfilename=None, outputfilename=None)
+    halomass = np.log10(10**halomass/fof.getmhoffset(280,337,1,1,6))
     junk, uniqindex = np.unique(ecog3grp[ecohamsel], return_index=True)
     halomass = halomass-np.log10(0.7)
     for i,idv in enumerate(haloid):
         sel = np.where(ecog3grp==idv)
-        ecog3logmh[sel] = halomass[i] # m280b
+        ecog3logmh[sel] = halomass[i] # m337b
 
     # calculate Rvir in arcsec
-    ecog3rvir = (3*(10**ecog3logmh / fof.getmhoffset(280,337,1,1,6)) / (4*np.pi*337*0.3*1.36e11) )**(1/3.)
-    resbg3rvir = (3*(10**resbg3logmh / fof.getmhoffset(280,377,1,1,6)) / (4*np.pi*337*0.3*1.36e11))**(1/3.)
+    ecog3rvir = (3*(10**ecog3logmh) / (4*np.pi*337*0.3*1.36e11) )**(1/3.)
+    resbg3rvir = (3*(10**resbg3logmh) / (4*np.pi*337*0.3*1.36e11))**(1/3.)
 
     ecointmass = ic.get_int_mass(ecologmbary[ecohamsel], ecog3grp[ecohamsel])
     plt.figure()
