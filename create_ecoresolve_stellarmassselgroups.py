@@ -24,7 +24,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
-from scipy.stats import binned_statistic
+from center_binned_stats import center_binned_stats
 import foftools as fof
 import iterativecombination as ic
 from smoothedbootstrap import smoothedbootstrap as sbs
@@ -156,8 +156,8 @@ if __name__=='__main__':
     median_relprojdist = np.array([np.median(relprojdist[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
     median_relvel = np.array([np.median(relvel[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
 
-    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
-    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
 
     #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
@@ -238,25 +238,30 @@ if __name__=='__main__':
     ecogdn = ecogdgrpn[ecogdsel]
     ecogdtotalmass = ic.get_int_mass(ecologmstar[ecogdsel], ecog3grp[ecogdsel])
 
-    massbins=np.arange(9.75,14,0.1)
+    massbins=np.arange(9.75,14,0.15)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmass<14))
-    gdmedianrproj, massbinedges, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,95), bins=massbins) 
-    gdmedianrelvel, jk, jk = binned_statistic(ecogdtotalmass[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,95), bins=massbins)
+    gdmedianrproj, massbincenters, massbinedges, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,95), bins=massbins)
+    print('here-test') 
+    gdmedianrproj_err = np.std(np.array([sbs(ecogdrelprojdist[binsel][np.where(np.logical_and(ecogdtotalmass[binsel]>massbinedges[i-1], ecogdtotalmass[binsel]<=massbinedges[i]))],\
+                               10000, np.nanpercentile, kwargs=dict({'q':95, 'axis':1})) for i in range(1,len(massbinedges))]), axis=1)
+    gdmedianrelvel, jk, jk, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,95), bins=massbins)
+    gdmedianrelvel_err = np.std(np.array([sbs(ecogdrelvel[binsel][np.where(np.logical_and(ecogdtotalmass[binsel]>massbinedges[i-1], ecogdtotalmass[binsel]<=massbinedges[i]))],\
+                               10000, np.nanpercentile, kwargs=dict({'q':95, 'axis':1})) for i in range(1,len(massbinedges))]), axis=1)
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION:
         guess=None
         #guess=[-1,0.5,-6,0.01]
     else:
         guess= [-1,0.5,-6,0.01]#None#[1e-5, 0.4, 0.2, 1]
-    poptr, pcovr = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=guess, maxfev=2000, sigma=10**massbinedges[:-1][~nansel])
+    poptr, pcovr = curve_fit(exp, massbincenters[~nansel], gdmedianrproj[~nansel], p0=guess, maxfev=2000, sigma=gdmedianrproj_err[~nansel])#30**massbincenters[~nansel])
     print("guess:", poptr)
-    poptv, pcovv = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1], maxfev=2000)
+    poptv, pcovv = curve_fit(exp, massbincenters[~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1], maxfev=2000, sigma=gdmedianrelvel_err[~nansel])
 
     tx = np.linspace(7,15,100)
     plt.figure()
     plt.axhline(0)
     plt.plot(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='95th percentile in bin')
+    plt.errorbar(massbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='r^', label='95th percentile in bin')
     plt.plot(tx, exp(tx,*poptr))
     plt.xlabel(r"Integrated Stellar Mass of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
@@ -267,7 +272,7 @@ if __name__=='__main__':
 
     plt.figure()
     plt.plot(ecogdtotalmass[binsel], ecogdrelvel[binsel], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
-    plt.plot(massbinedges[:-1], gdmedianrelvel,'r^',label='Medians')
+    plt.errorbar(massbincenters, gdmedianrelvel, yerr=gdmedianrelvel_err, fmt='r^',label='Medians')
     plt.plot(tx, exp(tx, *poptv))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated Stellar Mass of Giant + Dwarf Members")
@@ -289,18 +294,23 @@ if __name__=='__main__':
     resbana_gdn = resbana_gdgrpn[resbana_gdsel]
     resbana_gdtotalmass = ic.get_int_mass(ecologmstar[resbana_gdsel], resbana_g3grp[resbana_gdsel])
 
-    massbins2=np.arange(9.75,14,0.1)
+    massbins2=np.arange(9.75,14,0.15)
     binsel2 = np.where(np.logical_and(resbana_gdn>1, resbana_gdtotalmass>-24))
-    gdmedianrproj, massbinedges, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,95), bins=massbins2)
-    gdmedianrelvel, jk, jk = binned_statistic(resbana_gdtotalmass[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,95), bins=massbins2)
+    gdmedianrproj, massbincenters, massbinedges, jk = center_binned_stats(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,95), bins=massbins2)
+    gdmedianrproj_err = np.std(np.array([sbs(resbana_gdrelprojdist[binsel2][np.where(np.logical_and(resbana_gdtotalmass[binsel2]>massbinedges[i-1], resbana_gdtotalmass[binsel2]<=massbinedges[i]))],\
+                               10000, np.nanpercentile, kwargs=dict({'q':95, 'axis':1})) for i in range(1,len(massbinedges))]), axis=1)
+    gdmedianrelvel, jk, jk, jk = center_binned_stats(resbana_gdtotalmass[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,95), bins=massbins2)
+    gdmedianrelvel_err = np.std(np.array([sbs(resbana_gdrelvel[binsel2][np.where(np.logical_and(resbana_gdtotalmass[binsel2]>massbinedges[i-1], resbana_gdtotalmass[binsel2]<=massbinedges[i]))],\
+                               10000, np.nanpercentile, kwargs=dict({'q':95, 'axis':1})) for i in range(1,len(massbinedges))]), axis=1)
+ 
     nansel = np.isnan(gdmedianrproj)
-    poptr_resbana, jk = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrproj[~nansel], p0=poptr, sigma=10**massbinedges[:-1][~nansel])
-    poptv_resbana, jk = curve_fit(exp, massbinedges[:-1][~nansel], gdmedianrelvel[~nansel], p0=poptv, sigma=massbinedges[:-1][~nansel])#[3e-5,4e-1,5e-03,1])
+    poptr_resbana, jk = curve_fit(exp, massbincenters[~nansel], gdmedianrproj[~nansel], p0=poptr, sigma=gdmedianrproj_err[~nansel])#10**massbincenters[~nansel])
+    poptv_resbana, jk = curve_fit(exp, massbincenters[~nansel], gdmedianrelvel[~nansel], p0=poptv, sigma=gdmedianrelvel_err[~nansel])#[3e-5,4e-1,5e-03,1])
 
     tx = np.linspace(7,15)
     plt.figure()
     plt.plot(resbana_gdtotalmass[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(massbinedges[:-1], gdmedianrproj, 'r^', label='95th percentile in bin')
+    plt.plot(massbincenters, gdmedianrproj, 'r^', label='95th percentile in bin')
     plt.plot(tx, exp(tx,*poptr_resbana))
     plt.xlabel(r"Integrated Stellar Mass of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
@@ -311,7 +321,7 @@ if __name__=='__main__':
 
     plt.figure()
     plt.plot(resbana_gdtotalmass[binsel2], resbana_gdrelvel[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
-    plt.plot(massbinedges[:-1], gdmedianrelvel,'r^',label='Medians')
+    plt.plot(massbincenters, gdmedianrelvel,'r^',label='Medians')
     plt.plot(tx, exp(tx, *poptv_resbana))
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated Stellar Mass of Giant + Dwarf Members")
