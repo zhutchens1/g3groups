@@ -167,8 +167,8 @@ if __name__=='__main__':
     median_relprojdist = np.array([np.median(relprojdist[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
     median_relvel = np.array([np.median(relvel[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
 
-    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
-    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
 
     #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
@@ -254,8 +254,8 @@ if __name__=='__main__':
    
     magbins=np.arange(-24,-19,0.25)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmag>-24))
-    gdmedianrproj, magbincenters, agbinedges, jk = center_binned_stats(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], lambda x:np.nanpercentile(x,95), bins=magbins)
-    gdmedianrelvel, jk, jk, jk = center_binned_stats(ecogdtotalmag[binsel], ecogdrelvel[binsel], lambda x: np.nanpercentile(x,95), bins=magbins)
+    gdmedianrproj, magbincenters, agbinedges, jk = center_binned_stats(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], np.median, bins=magbins)
+    gdmedianrelvel, jk, jk, jk = center_binned_stats(ecogdtotalmag[binsel], ecogdrelvel[binsel], np.median, bins=magbins) # edit here
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION: 
         guess=None
@@ -268,8 +268,9 @@ if __name__=='__main__':
     tx = np.linspace(-27,-17,100)
     plt.figure()
     plt.plot(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(magbincenters, gdmedianrproj, 'r^', label='95th percentile in bin')
-    plt.plot(tx, decayexp(tx,*poptr))
+    plt.plot(magbincenters, gdmedianrproj, 'r^', label='Medians')
+    plt.plot(tx, 1*decayexp(tx,*poptr), label='Fit to Medians')
+    plt.plot(tx, 3*decayexp(tx,*poptr), label=r'3 times Fit to Medians')
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
@@ -282,14 +283,15 @@ if __name__=='__main__':
     plt.figure()
     plt.plot(ecogdtotalmag[binsel], ecogdrelvel[binsel], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
     plt.plot(magbincenters, gdmedianrelvel,'r^',label='Medians')
-    plt.plot(tx, decayexp(tx, *poptv))
+    plt.plot(tx, decayexp(tx, *poptv), label='Fit to Medians')
+    plt.plot(tx, 4.5*decayexp(tx, *poptv), label='4.5 times Fit to Medians')
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     plt.gca().invert_xaxis()
     plt.show()
 
-    rproj_for_iteration = lambda M: decayexp(M, *poptr)
-    vproj_for_iteration = lambda M: decayexp(M, *poptv)
+    rproj_for_iteration = lambda M: 3*decayexp(M, *poptr)
+    vproj_for_iteration = lambda M: 4.5*decayexp(M, *poptv)
 
     # --------------- now need to do this calibration for the RESOLVE-B analogue dataset, down to -17.0) -------------$
     resbana_gdgrpn = fof.multiplicity_function(resbana_g3grp, return_by_galaxy=True)
@@ -304,8 +306,8 @@ if __name__=='__main__':
 
     magbins2=np.arange(-24,-19,0.25)
     binsel2 = np.where(np.logical_and(resbana_gdn>1, resbana_gdtotalmag>-24))
-    gdmedianrproj, magbincenters, magbinedges, jk = center_binned_stats(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], lambda x:np.nanpercentile(x,95), bins=magbins2)
-    gdmedianrelvel, jk, jk, jk = center_binned_stats(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], lambda x: np.nanpercentile(x,95), bins=magbins2)
+    gdmedianrproj, magbincenters, magbinedges, jk = center_binned_stats(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], np.median, bins=magbins2)
+    gdmedianrelvel, jk, jk, jk = center_binned_stats(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], np.median, bins=magbins2)
     nansel = np.isnan(gdmedianrproj)
     poptr_resbana, jk = curve_fit(decayexp, magbincenters[~nansel], gdmedianrproj[~nansel], p0=poptr)
     poptv_resbana, jk = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
@@ -313,8 +315,9 @@ if __name__=='__main__':
     tx = np.linspace(-27,-16,100)
     plt.figure()
     plt.plot(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(magbincenters, gdmedianrproj, 'r^', label='95th percentile in bin')
-    plt.plot(tx, decayexp(tx,*poptr_resbana))
+    plt.plot(magbincenters, gdmedianrproj, 'r^', label='Medians')
+    plt.plot(tx, decayexp(tx,*poptr_resbana), label='Fit to Medians')
+    plt.plot(tx, 3*decayexp(tx,*poptr_resbana), label='3 times Fit to Medians')
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
@@ -326,14 +329,15 @@ if __name__=='__main__':
     plt.figure()
     plt.plot(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
     plt.plot(magbincenters, gdmedianrelvel,'r^',label='Medians')
-    plt.plot(tx, decayexp(tx, *poptv_resbana))
+    plt.plot(tx, decayexp(tx, *poptv_resbana), label='Fit to Medians')
+    plt.plot(tx, 4.5*decayexp(tx, *poptv_resbana), label='4.5 times Fit to Medians')
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     plt.gca().invert_xaxis()
     plt.show()
 
-    rproj_for_iteration_resbana = lambda M: decayexp(M, *poptr_resbana)
-    vproj_for_iteration_resbana = lambda M: decayexp(M, *poptv_resbana)
+    rproj_for_iteration_resbana = lambda M: 3*decayexp(M, *poptr_resbana)
+    vproj_for_iteration_resbana = lambda M: 4.5*decayexp(M, *poptv_resbana)
 
 
     ###########################################################
