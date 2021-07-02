@@ -31,14 +31,18 @@ from smoothedbootstrap import smoothedbootstrap as sbs
 from scipy.interpolate import UnivariateSpline
 import sys
 
+def sigmarange(x):
+    q84, q16 = np.percentile(x, [84 ,16])
+    return (q84-q16)/2.
+
 #def giantmodel(x, a, b, c, d):
 #    return a*np.log(np.abs(b)*x+c)+d
 
 def giantmodel(x, a, b):
     return np.abs(a)*np.log(np.abs(b)*x+1)
 
-def decayexp(x, a, b, c, d):
-    return np.abs(a)*np.exp(-1*np.abs(b)*x + c)+np.abs(d)
+def decayexp(x, a, b, c):
+    return np.abs(a)*np.exp(-1*np.abs(b)*x + c)#+np.abs(d)
 
 def sepmodel(x, a, b, c, d, e):
     #return np.abs(a)*np.exp(-1*np.abs(b)*x + c)+d
@@ -125,8 +129,8 @@ if __name__=='__main__':
     plt.xlim(-24,-19)
     plt.ylim(0,70)
     plt.gca().invert_xaxis()
-    plt.savefig("images/meansep_M_r_plot.jpg")
-    plt.savefig("paper1plots/meansep_M_r_plot.eps")
+    #plt.savefig("images/meansep_M_r_plot.jpg")
+    #plt.savefig("paper1plots/meansep_M_r_plot.eps")
     plt.show()
 
     # (c) perform giant-only FoF on ECO
@@ -150,8 +154,8 @@ if __name__=='__main__':
     plt.yscale('log')
     plt.legend(loc='best')
     plt.xlim(0,80)
-    plt.savefig("images/giantonlymult.jpg")
-    plt.savefig("paper1plots/giantonlymult.eps")
+    #plt.savefig("images/giantonlymult.jpg")
+    #plt.savefig("paper1plots/giantonlymult.eps")
     plt.show()
     
     ##########################################
@@ -214,8 +218,8 @@ if __name__=='__main__':
     ax.set_xlim(0,20)
     ax.set_ylim(0,1.5)
     ax.set_xticks(np.arange(0,22,2))
-    plt.savefig("images/rproj_calibration_assoc.jpg")
-    plt.savefig("paper1plots/rproj_calibration_assoc.eps")
+    #plt.savefig("images/rproj_calibration_assoc.jpg")
+    #plt.savefig("paper1plots/rproj_calibration_assoc.eps")
     plt.show()
 
     ####################################
@@ -255,38 +259,42 @@ if __name__=='__main__':
     magbins=np.arange(-24,-19,0.25)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmag>-24))
     gdmedianrproj, magbincenters, agbinedges, jk = center_binned_stats(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], np.median, bins=magbins)
-    gdmedianrelvel, jk, jk, jk = center_binned_stats(ecogdtotalmag[binsel], ecogdrelvel[binsel], np.median, bins=magbins) # edit here
+    gdmedianrproj_err, jk, jk, jk = center_binned_stats(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], sigmarange, bins=magbins)
+    gdmedianrelvel, jk, jk, jk = center_binned_stats(ecogdtotalmag[binsel], ecogdrelvel[binsel], np.median, bins=magbins)
+    gdmedianrelvel_err, jk, jk, jk = center_binned_stats(ecogdtotalmag[binsel], ecogdrelvel[binsel], sigmarange, bins=magbins)
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION: 
         guess=None
     else:
-        guess=[1e-5, 0.4, 0.2, 1]
+        guess=[1e-5, 0.4, 0.2]
     poptr, pcovr = curve_fit(decayexp, magbincenters[~nansel], gdmedianrproj[~nansel], p0=guess)
     print("guess:", poptr)
-    poptv, pcovv = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
+    poptv, pcovv = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03])#,1])
 
     tx = np.linspace(-27,-17,100)
     plt.figure()
     plt.plot(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(magbincenters, gdmedianrproj, 'r^', label='Medians')
+    plt.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='r^', label='Medians')
     plt.plot(tx, 1*decayexp(tx,*poptr), label='Fit to Medians')
     plt.plot(tx, 3*decayexp(tx,*poptr), label=r'3 times Fit to Medians')
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
-    plt.xlim(-25,-17)
+    plt.xlim(-25,-19)
     plt.ylim(0,1.3)
     plt.gca().invert_xaxis()
-    plt.savefig("images/itercombboundaries.jpeg")
+    #plt.savefig("images/itercombboundaries.jpeg")
     plt.show()
 
     plt.figure()
     plt.plot(ecogdtotalmag[binsel], ecogdrelvel[binsel], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
-    plt.plot(magbincenters, gdmedianrelvel,'r^',label='Medians')
+    plt.errorbar(magbincenters, gdmedianrelvel, yerr=gdmedianrelvel_err, fmt='r^',label='Medians')
     plt.plot(tx, decayexp(tx, *poptv), label='Fit to Medians')
     plt.plot(tx, 4.5*decayexp(tx, *poptv), label='4.5 times Fit to Medians')
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
+    plt.xlim(-25,-19)
+    plt.ylim(0,1000)
     plt.gca().invert_xaxis()
     plt.show()
 
@@ -307,32 +315,37 @@ if __name__=='__main__':
     magbins2=np.arange(-24,-19,0.25)
     binsel2 = np.where(np.logical_and(resbana_gdn>1, resbana_gdtotalmag>-24))
     gdmedianrproj, magbincenters, magbinedges, jk = center_binned_stats(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], np.median, bins=magbins2)
+    gdmedianrproj_err, jk, jk, jk = center_binned_stats(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], sigmarange, bins=magbins2)
     gdmedianrelvel, jk, jk, jk = center_binned_stats(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], np.median, bins=magbins2)
+    gdmedianrelvel_err, jk, jk, jk = center_binned_stats(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], sigmarange, bins=magbins2)
     nansel = np.isnan(gdmedianrproj)
     poptr_resbana, jk = curve_fit(decayexp, magbincenters[~nansel], gdmedianrproj[~nansel], p0=poptr)
-    poptv_resbana, jk = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03,1])
+    poptv_resbana, jk = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=poptv)
 
     tx = np.linspace(-27,-16,100)
     plt.figure()
     plt.plot(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups')
-    plt.plot(magbincenters, gdmedianrproj, 'r^', label='Medians')
+    plt.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='r^', label='Medians')
     plt.plot(tx, decayexp(tx,*poptr_resbana), label='Fit to Medians')
     plt.plot(tx, 3*decayexp(tx,*poptr_resbana), label='3 times Fit to Medians')
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
-    plt.xlim(-25,-17)
+    plt.xlim(-25,-19)
+    plt.ylim(0,1.3)
     #plt.ylim(0,1.3)
     plt.gca().invert_xaxis()
     plt.show()
 
     plt.figure()
     plt.plot(resbana_gdtotalmag[binsel2], resbana_gdrelvel[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
-    plt.plot(magbincenters, gdmedianrelvel,'r^',label='Medians')
+    plt.errorbar(magbincenters, gdmedianrelvel, yerr=gdmedianrelvel_err, fmt='r^',label='Medians')
     plt.plot(tx, decayexp(tx, *poptv_resbana), label='Fit to Medians')
     plt.plot(tx, 4.5*decayexp(tx, *poptv_resbana), label='4.5 times Fit to Medians')
     plt.ylabel("Relative Velocity between Galaxy and Group Center")
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
+    plt.xlim(-25,-19)
+    plt.ylim(0,1100)
     plt.gca().invert_xaxis()
     plt.show()
 
@@ -419,7 +432,7 @@ if __name__=='__main__':
     plt.ylabel(r"group halo mass (log$M_\odot$)")
     plt.legend(loc='best')
     plt.gca().invert_xaxis()
-    plt.savefig("images/hamLrrelation.jpeg")
+    #plt.savefig("images/hamLrrelation.jpeg")
     plt.show()
 
     ########################################
