@@ -242,11 +242,11 @@ if __name__=='__main__':
     massbins=np.arange(9.75,14,0.15)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmass<14))
     gdmedianrproj, massbincenters, massbinedges, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], np.median, bins=massbins)
-    gdmedianrproj_err = np.std(np.array([sbs(ecogdrelprojdist[binsel][np.where(np.logical_and(ecogdtotalmass[binsel]>massbinedges[i-1], ecogdtotalmass[binsel]<=massbinedges[i]))],\
-                               10000, np.median) for i in range(1,len(massbinedges))]), axis=1)
+    #gdmedianrproj_err = np.std(np.array([sbs(ecogdrelprojdist[binsel][np.where(np.logical_and(ecogdtotalmass[binsel]>massbinedges[i-1], ecogdtotalmass[binsel]<=massbinedges[i]))],\
+    #                           10000, np.median) for i in range(1,len(massbinedges))]), axis=1)
     gdmedianrelvel, jk, jk, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelvel[binsel], np.median, bins=massbins)
-    gdmedianrelvel_err = np.std(np.array([sbs(ecogdrelvel[binsel][np.where(np.logical_and(ecogdtotalmass[binsel]>massbinedges[i-1], ecogdtotalmass[binsel]<=massbinedges[i]))],\
-                               10000, np.median) for i in range(1,len(massbinedges))]), axis=1)
+    #gdmedianrelvel_err = np.std(np.array([sbs(ecogdrelvel[binsel][np.where(np.logical_and(ecogdtotalmass[binsel]>massbinedges[i-1], ecogdtotalmass[binsel]<=massbinedges[i]))],\
+    #                           10000, np.median) for i in range(1,len(massbinedges))]), axis=1)
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION:
         #guess=None
