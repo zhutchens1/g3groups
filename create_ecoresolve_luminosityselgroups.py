@@ -129,8 +129,8 @@ if __name__=='__main__':
     plt.xlim(-24,-19)
     plt.ylim(0,70)
     plt.gca().invert_xaxis()
-    #plt.savefig("images/meansep_M_r_plot.jpg")
-    #plt.savefig("paper1plots/meansep_M_r_plot.eps")
+    plt.savefig("images/meansep_M_r_plot.jpg")
+    plt.savefig("paper1plots/meansep_M_r_plot.eps")
     plt.show()
 
     # (c) perform giant-only FoF on ECO
@@ -154,8 +154,8 @@ if __name__=='__main__':
     plt.yscale('log')
     plt.legend(loc='best')
     plt.xlim(0,80)
-    #plt.savefig("images/giantonlymult.jpg")
-    #plt.savefig("paper1plots/giantonlymult.eps")
+    plt.savefig("images/giantonlymult.jpg")
+    plt.savefig("paper1plots/giantonlymult.eps")
     plt.show()
     
     ##########################################
@@ -218,8 +218,8 @@ if __name__=='__main__':
     ax.set_xlim(0,20)
     ax.set_ylim(0,1.5)
     ax.set_xticks(np.arange(0,22,2))
-    #plt.savefig("images/rproj_calibration_assoc.jpg")
-    #plt.savefig("paper1plots/rproj_calibration_assoc.eps")
+    plt.savefig("images/rproj_calibration_assoc.jpg")
+    plt.savefig("paper1plots/rproj_calibration_assoc.eps")
     plt.show()
 
     ####################################
@@ -283,7 +283,7 @@ if __name__=='__main__':
     plt.xlim(-25,-19)
     plt.ylim(0,1.3)
     plt.gca().invert_xaxis()
-    #plt.savefig("images/itercombboundaries.jpeg")
+    plt.savefig("images/itercombboundaries.jpeg")
     plt.show()
 
     plt.figure()
@@ -432,7 +432,7 @@ if __name__=='__main__':
     plt.ylabel(r"group halo mass (log$M_\odot$)")
     plt.legend(loc='best')
     plt.gca().invert_xaxis()
-    #plt.savefig("images/hamLrrelation.jpeg")
+    plt.savefig("images/hamLrrelation.jpeg")
     plt.show()
 
     ########################################
