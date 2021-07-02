@@ -343,7 +343,7 @@ if __name__=='__main__':
 
     rproj_for_iteration_resbana = lambda M: 3*exp(M, *poptr_resbana)
     vproj_for_iteration_resbana = lambda M: 4.5*exp(M, *poptv_resbana)
-    sys.exit()
+  
     ###########################################################
     # Step 7: Iterative Combination of Dwarf Galaxies
     ###########################################################
