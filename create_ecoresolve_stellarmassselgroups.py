@@ -31,6 +31,7 @@ from smoothedbootstrap import smoothedbootstrap as sbs
 import sys
 from scipy.interpolate import UnivariateSpline
 
+sys.exit()
 #def giantmodel(x, a, b, c, d):
 #    return a*np.log(np.abs(b)*x+c)+d
 
