@@ -162,8 +162,8 @@ if __name__=='__main__':
     median_relprojdist = np.array([np.median(relprojdist[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
     median_relvel = np.array([np.median(relvel[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
 
-    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
-    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
 
     #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
@@ -500,8 +500,8 @@ if __name__=='__main__':
     resolveg3router = np.full(sz,-99.)
     resolveg3vdisp = np.full(sz,-99.)
 
-    resbg3grpngi = np.full(len(resbg3grp), -99)
-    resbg3grpndw = np.full(len(resbg3grp), -99)
+    resbg3grpngi = np.full(len(resbg3grp), 0)
+    resbg3grpndw = np.full(len(resbg3grp), 0)
     for uid in np.unique(resbg3grp):
         grpsel = np.where(resbg3grp==uid)
         gisel = np.where(np.logical_and((resbg3grp==uid),(resblogmstar>=9.5)))
