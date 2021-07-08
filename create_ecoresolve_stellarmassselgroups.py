@@ -162,8 +162,8 @@ if __name__=='__main__':
     median_relprojdist = np.array([np.median(relprojdist[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
     median_relvel = np.array([np.median(relvel[np.where(ecogiantgrpn==sz)]) for sz in uniqecogiantgrpn[keepcalsel]])
 
-    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
-    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 10000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    rproj_median_error = np.std(np.array([sbs(relprojdist[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1 })) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
+    dvproj_median_error = np.std(np.array([sbs(relvel[np.where(ecogiantgrpn==sz)], 1000000, np.median, kwargs=dict({'axis':1})) for sz in uniqecogiantgrpn[keepcalsel]]), axis=1)
 
     #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
@@ -247,17 +247,14 @@ if __name__=='__main__':
     massbins=np.arange(9.75,14,0.15)
     binsel = np.where(np.logical_and(ecogdn>1, ecogdtotalmass<14))
     gdmedianrproj, massbincenters, massbinedges, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], np.median, bins=massbins)
-<<<<<<< HEAD
     #gdmedianrproj_err = np.std(np.array([sbs(ecogdrelprojdist[binsel][np.where(np.logical_and(ecogdtotalmass[binsel]>massbinedges[i-1], ecogdtotalmass[binsel]<=massbinedges[i]))],\
     #                           10000, np.median) for i in range(1,len(massbinedges))]), axis=1)
     gdmedianrelvel, jk, jk, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelvel[binsel], np.median, bins=massbins)
     #gdmedianrelvel_err = np.std(np.array([sbs(ecogdrelvel[binsel][np.where(np.logical_and(ecogdtotalmass[binsel]>massbinedges[i-1], ecogdtotalmass[binsel]<=massbinedges[i]))],\
     #                           10000, np.median) for i in range(1,len(massbinedges))]), axis=1)
-=======
     gdmedianrproj_err, jk, jk, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelprojdist[binsel], sigmarange, bins=massbins)
     gdmedianrelvel, jk, jk, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelvel[binsel], np.median, bins=massbins)
     gdmedianrelvel_err, jk, jk, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelvel[binsel], sigmarange, bins=massbins)
->>>>>>> 3a9034729f0ba8eb81f64522e128e51aed68cf6a
     nansel = np.isnan(gdmedianrproj)
     if ADAPTIVE_OPTION:
         #guess=None
@@ -453,6 +450,7 @@ if __name__=='__main__':
     ecog3rproj = fof.get_grprproj_e17(ecoradeg, ecodedeg, ecocz, ecog3grp, h=0.7) / (ecog3grpcz/70.) * 206265 # in arcsec
     ecog3fc = fof.get_central_flag(ecologmstar, ecog3grp)
     ecog3router = fof.get_outermost_galradius(ecoradeg, ecodedeg, ecocz, ecog3grp) # in arcsec
+    ecog3router[(ecog3grpngi+ecog3grpndw)==1] = 0.
     junk, ecog3vdisp = fof.get_rproj_czdisp(ecoradeg, ecodedeg, ecocz, ecog3grp)
     ecog3rvir = ecog3rvir*206265/(ecog3grpcz/70.)
 
@@ -518,6 +516,7 @@ if __name__=='__main__':
     resbg3rproj = fof.get_grprproj_e17(resbradeg, resbdedeg, resbcz, resbg3grp, h=0.7) / (resbg3grpcz/70.) * 206265 # in arcsec
     resbg3fc = fof.get_central_flag(resblogmstar, resbg3grp)
     resbg3router = fof.get_outermost_galradius(resbradeg, resbdedeg, resbcz, resbg3grp) # in arcsec
+    resbg3router[(resbg3grpngi+resbg3grpndw)==1] = 0.
     junk, resbg3vdisp = fof.get_rproj_czdisp(resbradeg, resbdedeg, resbcz, resbg3grp)
     resbg3rvir = resbg3rvir*206265/(resbg3grpcz/70.)
     print(resbg3rvir)
