@@ -391,17 +391,19 @@ if __name__=='__main__':
 
     ax2 = plt.axes([0,0,1,1])
     # Manually set the position and relative size of the inset axes within ax1
-    ip = InsetPosition(ax, [0.4,0.2,0.5,0.5])
+    ip = InsetPosition(ax, [0.4,0.3,0.5,0.5])
     ax2.set_axes_locator(ip)
     # Mark the region corresponding to the inset axes on ax1 and draw lines
     # in grey linking the two axes.
-    mark_inset(ax1, ax2, loc1=2, loc2=4, fc="none", ec='0.5')
-   
-    ax2.hist(fof.multiplicity_function(ecoitassocid, return_by_galaxy=False), bins=binv, log=True, label='ECO Groups', histtype='step', linewidth=3)
-    ax2.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), bins=binv, log=True, label='RESOLVE-B Groups', histtype='step', hatch='\\')
+    #mark_inset(ax1, ax2, loc1=2, loc2=4, fc="none", ec='0.5')
 
+    binvd = np.arange(0.5,10.5,1)
+    ax2.hist(fof.multiplicity_function(ecoitassocid, return_by_galaxy=False), bins=binvd, log=True, label='ECO Groups', histtype='step', linewidth=3)
+    ax2.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), bins=binvd, log=True, label='RESOLVE-B Groups', histtype='step', hatch='\\')
+    ax2.set_xlim(0,5)
+    ax2.set_title('dwarf-only groups')
+    plt.savefig("paper1plots/multfunc_doinset.pdf")
     plt.show()
- 
     ############################################################
     # Step 8: Halo Abundance Matching
     ###########################################################
