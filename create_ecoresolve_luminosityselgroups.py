@@ -22,6 +22,7 @@ The outline of this code is:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid.inset_locator import (inset_axes, InsetPosition, mark_inset)
 from scipy.interpolate import interp1d 
 from scipy.optimize import curve_fit
 from center_binned_stats import center_binned_stats
@@ -130,7 +131,7 @@ if __name__=='__main__':
     plt.ylim(0,70)
     plt.gca().invert_xaxis()
     plt.savefig("images/meansep_M_r_plot.jpg")
-    plt.savefig("paper1plots/meansep_M_r_plot.eps")
+    plt.savefig("paper1plots/meansep_M_r_plot.pdf")
     plt.show()
 
     # (c) perform giant-only FoF on ECO
@@ -155,7 +156,7 @@ if __name__=='__main__':
     plt.legend(loc='best')
     plt.xlim(0,80)
     plt.savefig("images/giantonlymult.jpg")
-    plt.savefig("paper1plots/giantonlymult.eps")
+    plt.savefig("paper1plots/giantonlymult.pdf")
     plt.show()
     
     ##########################################
@@ -219,7 +220,7 @@ if __name__=='__main__':
     ax.set_ylim(0,1.5)
     ax.set_xticks(np.arange(0,22,2))
     plt.savefig("images/rproj_calibration_assoc.jpg")
-    plt.savefig("paper1plots/rproj_calibration_assoc.eps")
+    plt.savefig("paper1plots/rproj_calibration_assoc.pdf")
     plt.show()
 
     ####################################
@@ -272,30 +273,28 @@ if __name__=='__main__':
     poptv, pcovv = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03])#,1])
 
     tx = np.linspace(-27,-17,100)
-    plt.figure()
-    plt.plot(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
-    plt.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='r^', label='Medians')
-    plt.plot(tx, 1*decayexp(tx,*poptr), label='Fit to Medians')
-    plt.plot(tx, 3*decayexp(tx,*poptr), label=r'3 times Fit to Medians')
-    plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
-    plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
-    plt.legend(loc='best')
-    plt.xlim(-25,-19)
-    plt.ylim(0,1.3)
-    plt.gca().invert_xaxis()
-    plt.savefig("images/itercombboundaries.jpeg")
-    plt.show()
+    fig, (ax,ax1) = plt.subplots(ncols=2, figsize=(12,6))
+    ax.plot(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
+    ax.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='r^', label='Medians')
+    ax.plot(tx, 1*decayexp(tx,*poptr), label='Fit to Medians')
+    ax.plot(tx, 3*decayexp(tx,*poptr), label=r'3 times Fit to Medians')
+    ax.set_xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
+    ax.set_ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
+    ax.legend(loc='best')
+    ax.set_xlim(-25,-19)
+    ax.set_ylim(0,1.3)
+    ax.invert_xaxis()
 
-    plt.figure()
-    plt.plot(ecogdtotalmag[binsel], ecogdrelvel[binsel], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
-    plt.errorbar(magbincenters, gdmedianrelvel, yerr=gdmedianrelvel_err, fmt='r^',label='Medians')
-    plt.plot(tx, decayexp(tx, *poptv), label='Fit to Medians')
-    plt.plot(tx, 4.5*decayexp(tx, *poptv), label='4.5 times Fit to Medians')
-    plt.ylabel("Relative Velocity between Galaxy and Group Center")
-    plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
-    plt.xlim(-25,-19)
-    plt.ylim(0,1000)
-    plt.gca().invert_xaxis()
+    ax1.plot(ecogdtotalmag[binsel], ecogdrelvel[binsel], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
+    ax1.errorbar(magbincenters, gdmedianrelvel, yerr=gdmedianrelvel_err, fmt='r^',label='Medians')
+    ax1.plot(tx, decayexp(tx, *poptv), label='Fit to Medians')
+    ax1.plot(tx, 4.5*decayexp(tx, *poptv), label='4.5 times Fit to Medians')
+    ax1.set_ylabel("Relative Velocity between Galaxy and Group Center")
+    ax1.set_xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
+    ax1.set_xlim(-25,-19)
+    ax1.set_ylim(0,1000)
+    ax1.invert_xaxis()
+    plt.savefig("paper1plots/itercombboundaries.pdf")
     plt.show()
 
     rproj_for_iteration = lambda M: 3*decayexp(M, *poptr)
@@ -381,14 +380,26 @@ if __name__=='__main__':
     #plt.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), log=True, histtype='step')
     #plt.show()
     
-    plt.figure()
+    fig, ax = plt.subplots(figsize=(8,8))
     binv = np.arange(0.5,1200.5,3)
-    plt.hist(fof.multiplicity_function(ecog3grp[ecog3grp!=-99.], return_by_galaxy=False), bins=binv, log=True, label='ECO Groups', histtype='step', linewidth=3)
-    plt.hist(fof.multiplicity_function(resbg3grp[resbg3grp!=-99.], return_by_galaxy=False), bins=binv, log=True, label='RESOLVE-B Groups', histtype='step', hatch='\\')
-    plt.xlabel("Number of Giant + Dwarf Group Members")
-    plt.ylabel("Number of Groups")
-    plt.legend(loc='best')
-    plt.xlim(0,100)
+    ax.hist(fof.multiplicity_function(ecog3grp[ecog3grp!=-99.], return_by_galaxy=False), bins=binv, log=True, label='ECO Groups', histtype='step', linewidth=3)
+    ax.hist(fof.multiplicity_function(resbg3grp[resbg3grp!=-99.], return_by_galaxy=False), bins=binv, log=True, label='RESOLVE-B Groups', histtype='step', hatch='\\')
+    ax.set_xlabel("Number of Giant + Dwarf Group Members")
+    ax.set_ylabel("Number of Groups")
+    ax.legend(loc='best')
+    ax.set_xlim(0,100)
+
+    ax2 = plt.axes([0,0,1,1])
+    # Manually set the position and relative size of the inset axes within ax1
+    ip = InsetPosition(ax, [0.4,0.2,0.5,0.5])
+    ax2.set_axes_locator(ip)
+    # Mark the region corresponding to the inset axes on ax1 and draw lines
+    # in grey linking the two axes.
+    mark_inset(ax1, ax2, loc1=2, loc2=4, fc="none", ec='0.5')
+   
+    ax2.hist(fof.multiplicity_function(ecoitassocid, return_by_galaxy=False), bins=binv, log=True, label='ECO Groups', histtype='step', linewidth=3)
+    ax2.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), bins=binv, log=True, label='RESOLVE-B Groups', histtype='step', hatch='\\')
+
     plt.show()
  
     ############################################################
@@ -433,6 +444,7 @@ if __name__=='__main__':
     plt.legend(loc='best')
     plt.gca().invert_xaxis()
     plt.savefig("images/hamLrrelation.jpeg")
+    plt.savefig("paper1plots/hamLrrelationG3.pdf")
     plt.show()
 
     ########################################
