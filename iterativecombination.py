@@ -437,7 +437,7 @@ def HAMwrapper(galra, galdec, galcz, galmag, galgrpid, volume,  inputfilename=No
     # try to do the HAM
     if outputfilename is None: outputfilename='temporaryhamoutput'+str(time.time())+".txt"
     #try:
-    hamcommand = "./massmatch Mass_function.dat {} < ".format(volume)+inputfilename+" > "+outputfilename
+    hamcommand = "./massmatch HaloMF337tinker.dat {} < ".format(volume)+inputfilename+" > "+outputfilename
     try:
         os.system(hamcommand)
     except:
