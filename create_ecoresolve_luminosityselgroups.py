@@ -31,6 +31,22 @@ import iterativecombination as ic
 from smoothedbootstrap import smoothedbootstrap as sbs
 from scipy.interpolate import UnivariateSpline
 import sys
+from matplotlib.ticker import MaxNLocator
+from matplotlib import rcParams
+rcParams['axes.labelsize'] = 9
+rcParams['xtick.labelsize'] = 9
+rcParams['ytick.labelsize'] = 9
+rcParams['legend.fontsize'] = 9
+rcParams['font.family'] = 'sans-serif'
+#rcParams['font.sans-serif'] = ['Helvetica']
+#rcParams['text.usetex'] = True
+rcParams['grid.color'] = 'k'
+rcParams['grid.linewidth'] = 0.2
+my_locator = MaxNLocator(6)
+singlecolsize = (3.3522420091324205, 2.0717995001590714)
+doublecolsize = (7.100005949910059, 4.3880449973709)
+
+
 
 def sigmarange(x):
     q84, q16 = np.percentile(x, [84 ,16])
@@ -112,24 +128,27 @@ if __name__=='__main__':
     meansepinterp = UnivariateSpline(np.sort(ecogiantmags), ecogiantsepdata[np.argsort(ecogiantmags)])
     meansepinterp.set_smoothing_factor(100)
     ecogiantsep = meansepinterp(ecogiantmags)
-    print("Median Residual of Separation Fit: {} Mpc/h".format(np.median(np.abs(ecogiantsep-ecogiantsepdata))))
+    #print("Median Residual of Separation Fit: {} Mpc/h".format(np.median(np.abs(ecogiantsep-ecogiantsepdata))))
+
+    ecogiantsep = np.minimum(ecogiantsep, np.zeros_like(ecogiantsepdata)+meansep0)
 
     # (b) make an interpolation function use this for RESOLVE-B  
     resbgiantsel = (resbabsrmag<=-19.4) & (resbcz>4250) & (resbcz<7300)
-    resbgiantsep = meansepinterp(resbabsrmag[resbgiantsel])
+    resbgiantsep = np.minimum(meansepinterp(resbabsrmag[resbgiantsel]), np.zeros_like(resbabsrmag[resbgiantsel])+meansep0)
 
-    plt.figure()
+    plt.figure(figsize=(singlecolsize[0],singlecolsize[0]))
     tx=np.linspace(-24,-19.3,100)
-    plt.axhline(meansep0, label=r'Mean Separation of ECO Giant Galaxies, $\bar{s} = (V/N)^{1/3}$', color='k', linestyle='--')
-    plt.plot(tx, meansepinterp(tx), label=r'$s_{i,\rm\, fit}$')
-    plt.plot(ecogiantmags, ecogiantsepdata, 'k.', alpha=1, label=r'$s_i$ for ECO Giant Galaxies ($M_r \leq -19.4$)')
-    plt.plot(resbabsrmag[resbgiantsel], resbgiantsep, 'r^', alpha=0.4, label=r'$s_{i,\rm\, fit}$ for RESOLVE-B Giant Galaxies (interpolated, $M_r \leq -19.4$)')
+    plt.axhline(meansep0, label=r'$s_{\rm fixed} = (V/N)^{1/3}$', color='k', linestyle='--')
+    plt.plot(tx, meansepinterp(tx), label=r'$a_{i,\rm\, fit}$', color='red')
+    plt.plot(ecogiantmags, ecogiantsep, '.', alpha=0.6, label=r'$s_{i}$ (ECO)', rasterized=True, markersize=11, color='palegreen')
+    plt.plot(resbabsrmag[resbgiantsel], resbgiantsep, '.', alpha=1, label=r'$s_{i}$ (RESOLVE-B)', rasterized=True, markersize=5, color='k')
     plt.xlabel("Absolute $M_r$ of Giant Galaxy")
-    plt.ylabel(r"$s_i$ - Separation used for Galaxy $i$ in Giant-Only FoF [Mpc/h]")
-    plt.legend(loc='best')
+    plt.ylabel(r"Separation $s_i$ [Mpc/h]")# - Separation used for Galaxy $i$ in Giant-Only FoF [Mpc/h]")
+    plt.legend(loc='lower right')
     plt.xlim(-24,-19)
-    plt.ylim(0,70)
+    plt.ylim(2,4)
     plt.gca().invert_xaxis()
+    plt.tight_layout()
     plt.savefig("images/meansep_M_r_plot.jpg")
     plt.savefig("paper1plots/meansep_M_r_plot.pdf")
     plt.show()
@@ -146,15 +165,16 @@ if __name__=='__main__':
     resbg3grp[resbgiantsel] = resbgiantfofid
  
     # (e) check the FOF results
-    plt.figure()
+    plt.figure(figsize=(singlecolsize[0],1.1*singlecolsize[0]))
     binv = np.arange(0.5,3000.5,3)
-    plt.hist(fof.multiplicity_function(ecog3grp[ecog3grp!=-99.], return_by_galaxy=False), bins=binv, histtype='step', linewidth=3, label='ECO Giant-Only FoF Groups')
-    plt.hist(fof.multiplicity_function(resbg3grp[resbg3grp!=-99.], return_by_galaxy=False), bins=binv, histtype='step', linewidth=1.5, hatch='\\', label='RESOLVE-B Giant-Only FoF Groups')
+    plt.hist(fof.multiplicity_function(ecog3grp[ecog3grp!=-99.], return_by_galaxy=False), bins=binv, histtype='step', linewidth=3, label='ECO', color='palegreen')
+    plt.hist(fof.multiplicity_function(resbg3grp[resbg3grp!=-99.], return_by_galaxy=False), bins=binv, histtype='step', linewidth=1.5, hatch='\\', label='RESOLVE-B', color='k')
     plt.xlabel("Number of Giant Galaxies per Group")
-    plt.ylabel("Number of Giant-Only FoF Groups")
+    plt.ylabel("Number of Giant-Only Groups")
     plt.yscale('log')
     plt.legend(loc='best')
     plt.xlim(0,80)
+    plt.tight_layout()
     plt.savefig("images/giantonlymult.jpg")
     plt.savefig("paper1plots/giantonlymult.pdf")
     plt.show()
@@ -193,34 +213,35 @@ if __name__=='__main__':
     plt.plot(gihalon, gihalorvir, 'k.')
     plt.show()
 
-    fig, (ax,ax1) = plt.subplots(ncols=2, figsize=(13,5))
+    fig, (ax,ax1) = plt.subplots(ncols=2, figsize=doublecolsize)
     sel = (ecogiantgrpn>1)
-    ax1.scatter(gihalon, gihalovdisp, marker='D', color='purple', label=r'ECO HAM Velocity Dispersion')
-    ax1.plot(ecogiantgrpn[sel], relvel[sel], 'r.', alpha=0.2, label='ECO Giant Galaxies')
-    ax1.errorbar(uniqecogiantgrpn[keepcalsel], median_relvel, fmt='k^', label=r'$\Delta v_{\rm proj}$ (Median of $\Delta v_{\rm proj,\, gal}$)',yerr=dvproj_median_error)
+    ax1.scatter(gihalon, gihalovdisp, marker='D', color='purple', label=r'ECO HAM Velocity Dispersion', rasterized=True)
+    ax1.plot(ecogiantgrpn[sel], relvel[sel], 'r.', alpha=0.2, label='ECO Giant Galaxies', rasterized=True)
+    ax1.errorbar(uniqecogiantgrpn[keepcalsel], median_relvel, fmt='k^', label=r'$\Delta v_{\rm proj}$ (Median of $\Delta v_{\rm proj,\, gal}$)',yerr=dvproj_median_error, rasterized=True)
     tx = np.linspace(1,max(ecogiantgrpn),1000)
-    ax1.plot(tx, giantmodel(tx, *poptdvproj), label=r'$1\Delta v_{\rm proj}^{\rm fit}$')
-    ax1.plot(tx, 4.5*giantmodel(tx, *poptdvproj), 'g',  label=r'$4.5\Delta v_{\rm proj}^{\rm fit}$', linestyle='-.')
+    ax1.plot(tx, giantmodel(tx, *poptdvproj), label=r'$1\Delta v_{\rm proj}^{\rm fit}$', rasterized=True)
+    ax1.plot(tx, 4.5*giantmodel(tx, *poptdvproj), 'g',  label=r'$4.5\Delta v_{\rm proj}^{\rm fit}$', linestyle='-.', rasterized=True)
     ax1.set_xlim(0,20)
     ax1.set_ylim(0,1000)
     ax1.set_xticks(np.arange(0,22,2))
-    ax1.set_xlabel("Number of Giant Members")
+    ax1.set_xlabel("Number of Giant Members in Galaxy's Group")
     ax1.set_ylabel("Relative Velocity to Group Center [km/s]")
-    ax1.legend(loc='best')
+    ax1.legend(loc='best', framealpha=1)
 
-    ax.scatter(gihalon, gihalorvir, marker='D', color='purple', label=r'ECO Group Virial Radii')
-    ax.plot(ecogiantgrpn[sel], relprojdist[sel], 'r.', alpha=0.2, label='ECO Giant Galaxies')
-    ax.errorbar(uniqecogiantgrpn[keepcalsel], median_relprojdist, fmt='k^', label=r'$R_{\rm proj}$ (Median of $R_{\rm proj,\, gal}$)',yerr=rproj_median_error)
-    ax.plot(tx, giantmodel(tx, *poptrproj), label=r'$1R_{\rm proj}^{\rm fit}$')
-    ax.plot(tx, 3*giantmodel(tx, *poptrproj), 'g', label=r'$3R_{\rm proj}^{\rm fit}$', linestyle='-.')
+    ax.scatter(gihalon, gihalorvir, marker='D', color='purple', label=r'ECO HAM Virial Radii', rasterized=True)
+    ax.plot(ecogiantgrpn[sel], relprojdist[sel], 'r.', alpha=0.2, label='ECO Giant Galaxies', rasterized=True)
+    ax.errorbar(uniqecogiantgrpn[keepcalsel], median_relprojdist, fmt='k^', label=r'$R_{\rm proj}$ (Median of $R_{\rm proj,\, gal}$)',yerr=rproj_median_error, rasterized=True)
+    ax.plot(tx, giantmodel(tx, *poptrproj), label=r'$1R_{\rm proj}^{\rm fit}$', rasterized=True)
+    ax.plot(tx, 3*giantmodel(tx, *poptrproj), 'g', label=r'$3R_{\rm proj}^{\rm fit}$', linestyle='-.', rasterized=True)
     ax.set_xlabel("Number of Giant Members in Galaxy's Group")
     ax.set_ylabel("Projected Distance from Giant to Group Center [Mpc/h]")
-    ax.legend(loc='best')
+    ax.legend(loc='best', framealpha=1)
     ax.set_xlim(0,20)
     ax.set_ylim(0,1.5)
     ax.set_xticks(np.arange(0,22,2))
     plt.savefig("images/rproj_calibration_assoc.jpg")
     plt.savefig("paper1plots/rproj_calibration_assoc.pdf")
+    plt.tight_layout()
     plt.show()
 
     ####################################
@@ -273,11 +294,11 @@ if __name__=='__main__':
     poptv, pcovv = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03])#,1])
 
     tx = np.linspace(-27,-17,100)
-    fig, (ax,ax1) = plt.subplots(ncols=2, figsize=(12,6))
-    ax.plot(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups')
-    ax.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='r^', label='Medians')
-    ax.plot(tx, 1*decayexp(tx,*poptr), label='Fit to Medians')
-    ax.plot(tx, 3*decayexp(tx,*poptr), label=r'3 times Fit to Medians')
+    fig, (ax,ax1) = plt.subplots(ncols=2, figsize=doublecolsize)
+    ax.plot(ecogdtotalmag[binsel], ecogdrelprojdist[binsel], 'k.', alpha=0.2, label='ECO Galaxies in N>1 Giant+Dwarf Groups', rasterized=True)
+    ax.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='r^', label='Medians', rasterized=True)
+    ax.plot(tx, 1*decayexp(tx,*poptr), label='Fit to Medians', rasterized=True)
+    ax.plot(tx, 3*decayexp(tx,*poptr), label=r'3 times Fit to Medians', rasterized=True)
     ax.set_xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     ax.set_ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     ax.legend(loc='best')
@@ -285,10 +306,10 @@ if __name__=='__main__':
     ax.set_ylim(0,1.3)
     ax.invert_xaxis()
 
-    ax1.plot(ecogdtotalmag[binsel], ecogdrelvel[binsel], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups')
-    ax1.errorbar(magbincenters, gdmedianrelvel, yerr=gdmedianrelvel_err, fmt='r^',label='Medians')
-    ax1.plot(tx, decayexp(tx, *poptv), label='Fit to Medians')
-    ax1.plot(tx, 4.5*decayexp(tx, *poptv), label='4.5 times Fit to Medians')
+    ax1.plot(ecogdtotalmag[binsel], ecogdrelvel[binsel], 'k.', alpha=0.2, label='Mock Galaxies in N=2 Giant+Dwarf Groups', rasterized=True)
+    ax1.errorbar(magbincenters, gdmedianrelvel, yerr=gdmedianrelvel_err, fmt='r^',label='Medians', rasterized=True)
+    ax1.plot(tx, decayexp(tx, *poptv), label='Fit to Medians', rasterized=True)
+    ax1.plot(tx, 4.5*decayexp(tx, *poptv), label='4.5 times Fit to Medians', rasterized=True)
     ax1.set_ylabel("Relative Velocity between Galaxy and Group Center")
     ax1.set_xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     ax1.set_xlim(-25,-19)
@@ -322,11 +343,11 @@ if __name__=='__main__':
     poptv_resbana, jk = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=poptv)
 
     tx = np.linspace(-27,-16,100)
-    plt.figure()
-    plt.plot(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups')
-    plt.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='r^', label='Medians')
-    plt.plot(tx, decayexp(tx,*poptr_resbana), label='Fit to Medians')
-    plt.plot(tx, 3*decayexp(tx,*poptr_resbana), label='3 times Fit to Medians')
+    plt.figure(figsize=doublecolsize)
+    plt.plot(resbana_gdtotalmag[binsel2], resbana_gdrelprojdist[binsel2], 'k.', alpha=0.2, label='Mock Galaxies in N>1 Giant+Dwarf Groups', rasterized=True)
+    plt.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='r^', label='Medians', rasterized=True)
+    plt.plot(tx, decayexp(tx,*poptr_resbana), label='Fit to Medians', rasterized=True)
+    plt.plot(tx, 3*decayexp(tx,*poptr_resbana), label='3 times Fit to Medians', rasterized=True)
     plt.xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     plt.ylabel("Projected Distance from Galaxy to Group Center [Mpc/h]")
     plt.legend(loc='best')
@@ -380,7 +401,7 @@ if __name__=='__main__':
     #plt.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), log=True, histtype='step')
     #plt.show()
     
-    fig, ax = plt.subplots(figsize=(8,8))
+    fig, ax = plt.subplots(figsize=singlecolsize)
     binv = np.arange(0.5,1200.5,3)
     ax.hist(fof.multiplicity_function(ecog3grp[ecog3grp!=-99.], return_by_galaxy=False), bins=binv, log=True, label='ECO Groups', histtype='step', linewidth=3)
     ax.hist(fof.multiplicity_function(resbg3grp[resbg3grp!=-99.], return_by_galaxy=False), bins=binv, log=True, label='RESOLVE-B Groups', histtype='step', hatch='\\')
@@ -401,7 +422,7 @@ if __name__=='__main__':
     ax2.hist(fof.multiplicity_function(ecoitassocid, return_by_galaxy=False), bins=binvd, log=True, label='ECO Groups', histtype='step', linewidth=3)
     ax2.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), bins=binvd, log=True, label='RESOLVE-B Groups', histtype='step', hatch='\\')
     ax2.set_xlim(0,5)
-    ax2.set_title('dwarf-only groups')
+    ax2.set_title('Dwarf-Only Groups')
     plt.savefig("paper1plots/multfunc_doinset.pdf")
     plt.show()
     ############################################################
@@ -437,10 +458,10 @@ if __name__=='__main__':
     resbg3rvir = (3*(10**resbg3logmh) / (4*np.pi*337*0.3*1.36e11))**(1/3.)#/(resbg3grpcz/70.) * 206265
 
     ecointmag = ic.get_int_mag(ecoabsrmag[ecohamsel], ecog3grp[ecohamsel])
-    plt.figure()
+    plt.figure(figsize=singlecolsize)
     plt.plot(ecointmag, ecog3logmh[ecog3grp!=-99.], '.', color='palegreen', alpha=0.6, label='ECO', markersize=11)
     plt.plot(resbintmag, resbg3logmh[resbg3grp!=-99.], 'k.', alpha=1, label='RESOLVE-B', markersize=3)
-    plt.plot
+    #plt.plot
     plt.xlabel("group-integrated r-band luminosity")
     plt.ylabel(r"group halo mass (log$M_\odot$)")
     plt.legend(loc='best')
