@@ -108,17 +108,17 @@ if __name__=='__main__':
     meansepinterp = UnivariateSpline(np.sort(ecogiantmass), ecogiantsepdata[np.argsort(ecogiantmass)])
     meansepinterp.set_smoothing_factor(100)
     ecogiantsep = meansepinterp(ecogiantmass)
-    print("Median Residual of Separation Fit: {} Mpc/h".format(np.median(np.abs(ecogiantsep-ecogiantsepdata))))
+    ecogiantsep = np.minimum(ecogiantsep, np.zeros_like(ecogiantsepdata)+meansep0)
 
     # (b) make an interpolation function use this for RESOLVE-B
     resbgiantsel = (resblogmbary>=9.9) & (resbcz>4250) & (resbcz<7300)
-    resbgiantsep = meansepinterp(resblogmbary[resbgiantsel])
+    resbgiantsep = np.minimum(meansepinterp(resblogmbary[resbgiantsel]), np.zeros_like(resblogmbary[resbgiantsel])+meansep0)
 
     plt.figure()
     tx=np.linspace(9.9,12.5,100)
     plt.axhline(meansep0, label=r'Mean Separation of ECO Giant Galaxies, $s_0 = (V/N)^{1/3}$', color='k', linestyle='--')
     plt.plot(tx, meansepinterp(tx), label='Model Fit')
-    plt.plot(ecogiantmass, ecogiantsepdata, 'k.', alpha=1, label=r'ECO Giant Galaxies ($logM* > 9.9$)')
+    plt.plot(ecogiantmass, ecogiantsep, 'k.', alpha=1, label=r'ECO Giant Galaxies ($logM* > 9.9$)')
     plt.plot(resblogmbary[resbgiantsel], resbgiantsep, 'r^', alpha=0.4, label=r'RESOLVE-B Giant Galaxies (interpolated, $logM* > 9.9$)')
     plt.xlabel("baryonic Mass of Giant Galaxy")
     plt.ylabel(r"$s_i$ - Separation used for Galaxy $i$ in Giant-Only FoF [Mpc/h]")
@@ -178,7 +178,7 @@ if __name__=='__main__':
     # get virial radii from abundance matching to giant-only groups
     gihaloid, gilogmh, gir280, gihalovdisp = ic.HAMwrapper(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], ecologmbary[ecogiantsel], ecog3grp[ecogiantsel],\
                                                                 ecovolume, inputfilename=None, outputfilename=None)
-    gilogmh = np.log10(10**gilogmh/fof.getmhoffset(280,337,1,1,6))
+    gilogmh = np.log10(10**gilogmh)#no longer needed as of 7/29: /fof.getmhoffset(280,337,1,1,6))
     gihalorvir = (3*(10**gilogmh) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
     gihalon = fof.multiplicity_function(np.sort(ecog3grp[ecogiantsel]), return_by_galaxy=False)
     plt.figure()
@@ -382,7 +382,7 @@ if __name__=='__main__':
     resbana_hamsel = (resbana_g3grp!=-99.)
     resbana_haloid, resbana_halomass, jk, jk = ic.HAMwrapper(ecoradeg[resbana_hamsel], ecodedeg[resbana_hamsel], ecocz[resbana_hamsel], ecologmbary[resbana_hamsel], resbana_g3grp[resbana_hamsel],\
                                                                 ecovolume, inputfilename=None, outputfilename=None)
-    resbana_halomass = np.log10(10**resbana_halomass/fof.getmhoffset(280,337,1,1,6))
+    resbana_halomass = np.log10(10**resbana_halomass)# no longer needed as of 7/29: fof.getmhoffset(280,337,1,1,6))
     junk, uniqindex = np.unique(resbana_g3grp[resbana_hamsel], return_index=True)
     resbana_intmass = ic.get_int_mass(ecologmbary[resbana_hamsel], resbana_g3grp[resbana_hamsel])[uniqindex]
     sortind = np.argsort(resbana_intmass)
@@ -396,7 +396,6 @@ if __name__=='__main__':
     ecohamsel = (ecog3grp!=-99.)
     haloid, halomass, junk, junk = ic.HAMwrapper(ecoradeg[ecohamsel], ecodedeg[ecohamsel], ecocz[ecohamsel], ecologmbary[ecohamsel], ecog3grp[ecohamsel],\
                                                      ecovolume, inputfilename=None, outputfilename=None)
-    halomass = np.log10(10**halomass/fof.getmhoffset(280,337,1,1,6))
     junk, uniqindex = np.unique(ecog3grp[ecohamsel], return_index=True)
     halomass = halomass-np.log10(0.7)
     for i,idv in enumerate(haloid):
