@@ -156,7 +156,7 @@ if __name__=='__main__':
     # (c) perform giant-only FoF on ECO
     blos = 1.1
     bperp = 0.07 # from Duarte & Mamon 2014
-    ADAPTIVE_OPTION=1
+    ADAPTIVE_OPTION=0
     ecogiantfofid = fof.fast_fof(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], bperp, blos, (1-ADAPTIVE_OPTION)*meansep0+ADAPTIVE_OPTION*ecogiantsep) # meansep0 if fixed LL
     ecog3grp[ecogiantsel] = ecogiantfofid
     resbana_g3grp[ecogiantsel] = ecogiantfofid # RESOLVE-B analogue dataset
