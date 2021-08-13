@@ -22,7 +22,7 @@ We provide galaxy catalogs containing group information from three group-finding
 * `g3grplogS_*`: group-integrated stellar mass
 * `g3grpadAlpha_*`: Anderson-Darling test statistic, measuring virialization level (computed for N>6 groups)
 * `g3grptcross_*`:  Crossing of time of group in Gyr, computed as the average projected spatial radius per average peculiar velocity
-* `g3grpcolorgap_*`: The u-r color gap of the group, i.e. the difference in u-r color of the brightest and second brightest galaxies, selected in absolute r-magnitude.
+* `g3grpcolorgap_*`: The u-r color gap of the group, i.e. the difference in u-r color of the central and second-most massive/luminous group member.
 * `g3grpdsProb_*`: p-value from Dressler-Schectman test for groups with N>10; low p-values are indicative of subclustering and thus lower virialization. 
 
 The wildcard `*` must be replaced with `l`, `s`, or `b` to indicate your choice of group catalog - luminosity, stellar, or baryonic selected. All variables are set to -99 if the galaxy was not included in group finding.
@@ -47,12 +47,7 @@ Therefore our selection criteria for giant-only FoF are:
 * Baryonic mass-selected ECO/RESOLVE-A: `log(Mbary)>=9.9`, `2530 < cz [km/s] < 7470`
 * Baryonic mass-seleted RESOLVE-B: `log(Mbary)>=9.9`, `4250 < cz [km/s] < 7250`
 
-
-We employ an adaptive linking strategy during this giant-only FoF procedure, inspired by Robotham et al. (2011) and its volume-limited application in Mummery (2018, PhD thesis). We use line-of-sight b<sub>LOS</sub> and transverse b<sub>&#8869;</sub> linking multipliers of 1.1 and 0.07, respectively, as these are optimized for the study of galaxy environment (Duarte & Mamon, 2014). In a standard FoF approach, these values are multiplied by the mean separation of galaxies, s<sub>0</sub>=(V/N)<sup>1/3</sup>, and are used as linking lengths. In our approach, we assign linking lengths as the minimum of the s<sub>0</sub> and a<sub>i</sub>. The a<sub>i</sub> is an adaptive separation parameter based on the cumulative number density distribution of giant galaxies above a given luminosity or mass. It rises with galaxy luminosity/mass, and therefore the lowest mass galaxies get the smallest separation parameters. For the lowest giant galaxy in the sample, a<sub>i</sub> is approximately equal to 0.75s<sub>0</sub>. Using the mocks, we find this reduces unphysical over-merging of lower mass halos into larger ones.
-
-![Separation for Giant Galaxies in FoF](images/meansep_M_r_plot.jpg)
-
-At the end of step 1, we have a set of giant-only groups. All dwarfs have yet to be tested for group membership. The figure below shows the multiplicity function for these giant-only groups, based on the luminosity-selected catalog.
+We apply the FoF algorithm (Berlind et al. 2006) to this selection of giant galaxies, using line-of-sight b<sub>LOS</sub> and transverse b<sub>&#8869;</sub> linking multipliers of 1.1 and 0.07, respectively, as these are optimized for the study of galaxy environment (Duarte & Mamon, 2014). These constants are multiplied to the mean separation of giant galaxies in ECO, s<sub>0</sub>=(V/N)<sup>1/3</sup>, to on-sky and line-of-sight linking lengths. This provides a catalog of giant-only groups. All dwarfs have yet to be tested for group membership. The figure below shows the multiplicity function for these giant-only groups, based on the luminosity-selected catalog.
 
 ![Mult Function for Giant-Only Groups](images/giantonlymult.jpg) 
 
