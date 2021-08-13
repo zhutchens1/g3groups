@@ -1,6 +1,6 @@
 # RESOLVE-G3 (Gas in Galaxy Groups) Group Finding Algorithm and Catalogs
 
-This git repository stores the codes and group catalogs for the RESOLVE-G3 (Gas in Galaxy Groups) initiative. RESOLVE already contains a conventional group catalog (Eckert+ 2016) produced with friends-of-friends and halo abundance matching (HAM). However, as the choice of group finder inherently defines the volume for detecting and summing gas, we have carefully devised a new group finding technique for G3. This algorithm has also been designed with the intent to be compatible with other surveys that are not complete into the dwarf galaxy regime, for which techniques such as HAM are not consistently transferrable. The panels below describe our three-step, iterative algorithm and provide information on using the galaxy catalogs.
+This git repository stores the codes and group catalogs for the RESOLVE-G3 (Gas in Galaxy Groups) initiative. RESOLVE already contains a conventional group catalog (Eckert+ 2016, 2017) produced with friends-of-friends and halo abundance matching (HAM). However, as the choice of group finder inherently defines the volume for detecting and summing gas, we have carefully devised a new group finding technique for G3. This algorithm has also been designed with the intent to be compatible with other surveys that are not complete into the dwarf galaxy regime, for which techniques such as HAM are not consistently transferrable. The panels below describe our three-step, iterative algorithm and provide information on using the galaxy catalogs.
 
 ## Using the Group Data
 <details>
@@ -14,10 +14,16 @@ We provide galaxy catalogs containing group information from three group-finding
 * `g3grpdedeg_*`: declination of group center in decimal degrees
 * `g3grpcz_*`: Local Group-corrected velocity of group center in km/s
 * `g3logmh_*`: abundance-matched log halo mass (m280b) assuming h=0.7
-* `g3rvir_*`: theoretical group virial radius, in arcseconds, from halo mass (337b convention, i.e. NOT r280b)
+* `g3r337_*`: theoretical group virial radius, in arcseconds, from halo mass (337b convention, i.e. NOT r280b)
 * `g3rproj_*`: observational group projected radius, in arcseconds, calculated as 75th percentile radius of giant and dwarf members
 * `g3router_*`: distance to outermost group member, in arcseconds, from the group center
 * `g3fc_*`: 1/0 central flag, defined as the most luminous or massive group galaxy.
+* `g3grplogG_*`: group-integrated gas mass
+* `g3grplogS_*`: group-integrated stellar mass
+* `g3grpadAlpha_*`: Anderson-Darling test statistic, measuring virialization level (computed for N>6 groups)
+* `g3grptcross_*`:  Crossing of time of group in Gyr, computed as the average projected spatial radius per average peculiar velocity
+* `g3grpcolorgap_*`: The u-r color gap of the group, i.e. the difference in u-r color of the brightest and second brightest galaxies, selected in absolute r-magnitude.
+* `g3grpdsProb_*`: p-value from Dressler-Schectman test for groups with N>10; low p-values are indicative of subclustering and thus lower virialization. 
 
 The wildcard `*` must be replaced with `l`, `s`, or `b` to indicate your choice of group catalog - luminosity, stellar, or baryonic selected. All variables are set to -99 if the galaxy was not included in group finding.
 
