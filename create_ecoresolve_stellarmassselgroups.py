@@ -100,41 +100,18 @@ if __name__=='__main__':
     # (a) compute sep values for eco giants
     ecovolume = 192351.36 # Mpc^3 with h=1 **
     meansep0 = (ecovolume/len(ecologmstar[ecogiantsel]))**(1/3.)
-    ecogiantmass = ecologmstar[ecogiantsel]
-    ecogiantsepdata = np.array([(192351.36/len(ecogiantmass[ecogiantmass>=Ms]))**(1/3.) for Ms in ecogiantmass])
-    ecogiantsepdata = ecogiantsepdata*meansep0/np.median(ecogiantsepdata)
-    #poptsfit, pcovsfit = curve_fit(sepmodel, ecogiantmass, ecogiantsepdata)
-    #meansepinterp = lambda x: sepmodel(x, *poptsfit)
-    #ecogiantsep = meansepinterp(ecogiantmass)
-    meansepinterp = UnivariateSpline(np.sort(ecogiantmass), ecogiantsepdata[np.argsort(ecogiantmass)])
-    meansepinterp.set_smoothing_factor(150)
-    ecogiantsep = meansepinterp(ecogiantmass)
-    ecogiantsep = np.minimum(ecogiantsep, np.zeros_like(ecogiantsepdata)+meansep0)
 
     # (b) make an interpolation function use this for RESOLVE-B
-    resbgiantsel = (resblogmstar>=9.5) & (resbcz>4250) & (resbcz<7300)
-    resbgiantsep = np.minimum(meansepinterp(resblogmstar[resbgiantsel]), np.zeros_like(resblogmstar[resbgiantsel])+meansep0)
-
-    plt.figure()
-    tx=np.linspace(9.5,12.5,100)
-    plt.axhline(meansep0, label=r'Mean Separation of ECO Giant Galaxies, $s_0 = (V/N)^{1/3}$', color='k', linestyle='--')
-    plt.plot(tx, meansepinterp(tx), label='Model Fit')
-    plt.plot(ecogiantmass, ecogiantsep, 'k.', alpha=1, label=r'ECO Giant Galaxies ($logM* > 9.5$)')
-    plt.plot(resblogmstar[resbgiantsel], resbgiantsep, 'r^', alpha=0.4, label=r'RESOLVE-B Giant Galaxies (interpolated, $logM* > 9.5$)')
-    plt.xlabel("Stellar Mass of Giant Galaxy")
-    plt.ylabel(r"$s_i$ - Separation used for Galaxy $i$ in Giant-Only FoF [Mpc/h]")
-    plt.legend(loc='best')
-    plt.show()
 
     # (c) perform giant-only FoF on ECO
     blos = 1.1
     bperp = 0.07 # from Duarte & Mamon 2014
-    ADAPTIVE_OPTION=1
-    ecogiantfofid = fof.fast_fof(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], bperp, blos, (1-ADAPTIVE_OPTION)*meansep0+ADAPTIVE_OPTION*ecogiantsep) # meansep0 if fixed LL
+    ecogiantfofid = fof.fast_fof(ecoradeg[ecogiantsel], ecodedeg[ecogiantsel], ecocz[ecogiantsel], bperp, blos, meansep0) # meansep0 if fixed LL
     ecog3grp[ecogiantsel] = ecogiantfofid
     resbana_g3grp[ecogiantsel] = ecogiantfofid # RESOLVE-B analogue dataset
     # (d) perform giant-only FoF on RESOLVE-B
-    resbgiantfofid = fof.fast_fof(resbradeg[resbgiantsel], resbdedeg[resbgiantsel], resbcz[resbgiantsel], bperp, blos, (1-ADAPTIVE_OPTION)*meansep0+ADAPTIVE_OPTION*resbgiantsep)
+    resbgiantsel = (resblogmstar>=9.5) & (resbcz>4250) & (resbcz<7300)
+    resbgiantfofid = fof.fast_fof(resbradeg[resbgiantsel], resbdedeg[resbgiantsel], resbcz[resbgiantsel], bperp, blos, meansep0)
     resbg3grp[resbgiantsel] = resbgiantfofid
 
     # (e) check the FOF results
