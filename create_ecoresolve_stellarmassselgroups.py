@@ -452,7 +452,7 @@ if __name__=='__main__':
     ecodata['g3grpndw_s'] = ecog3grpndw
     ecodata['g3grpngi_s'] = ecog3grpngi
     ecodata['g3logmh_s'] = ecog3logmh
-    ecodata['g3rvir_s'] = ecog3rvir
+    ecodata['g3r337_s'] = ecog3rvir
     ecodata['g3rproj_s'] = ecog3rproj
     ecodata['g3router_s'] = ecog3router
     ecodata['g3fc_s'] = ecog3fc
@@ -551,7 +551,7 @@ if __name__=='__main__':
     resolvedata['g3grpdedeg_s'] = resolveg3grpdedeg
     resolvedata['g3grpcz_s'] = resolveg3grpcz
     resolvedata['g3logmh_s'] = resolveg3logmh
-    resolvedata['g3rvir_s'] = resolveg3rvir
+    resolvedata['g3r337_s'] = resolveg3rvir
     resolvedata['g3rproj_s'] = resolveg3rproj
     resolvedata['g3router_s'] = resolveg3router
     resolvedata['g3fc_s'] = resolveg3fc

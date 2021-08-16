@@ -27,6 +27,7 @@ from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 from center_binned_stats import center_binned_stats
 import foftools as fof
+import virtools as vz
 import iterativecombination as ic
 from smoothedbootstrap import smoothedbootstrap as sbs
 from scipy.interpolate import UnivariateSpline
@@ -52,19 +53,11 @@ def sigmarange(x):
     q84, q16 = np.percentile(x, [84 ,16])
     return (q84-q16)/2.
 
-#def giantmodel(x, a, b, c, d):
-#    return a*np.log(np.abs(b)*x+c)+d
-
 def giantmodel(x, a, b):
     return np.abs(a)*np.log(np.abs(b)*x+1)
 
 def decayexp(x, a, b, c):
     return np.abs(a)*np.exp(-1*np.abs(b)*x + c)#+np.abs(d)
-
-def sepmodel(x, a, b, c, d, e):
-    #return np.abs(a)*np.exp(-1*np.abs(b)*x + c)+d
-    #return a*(x**3)+b*(x**2)+c*x+d
-    return a*(x**4)+b*(x**3)+c*(x**2)+(d*x)+e
 
 if __name__=='__main__':
     ####################################
@@ -487,7 +480,7 @@ if __name__=='__main__':
     ecodata['g3grpndw_l'] = ecog3grpndw
     ecodata['g3grpngi_l'] = ecog3grpngi
     ecodata['g3logmh_l'] = ecog3logmh
-    ecodata['g3rvir_l'] = ecog3rvir
+    ecodata['g3r337_l'] = ecog3rvir
     ecodata['g3rproj_l'] = ecog3rproj
     ecodata['g3router_l'] = ecog3router
     ecodata['g3fc_l'] = ecog3fc
@@ -593,7 +586,7 @@ if __name__=='__main__':
     resolvedata['g3grpdedeg_l'] = resolveg3grpdedeg
     resolvedata['g3grpcz_l'] = resolveg3grpcz
     resolvedata['g3logmh_l'] = resolveg3logmh
-    resolvedata['g3rvir_l'] = resolveg3rvir
+    resolvedata['g3r337_l'] = resolveg3rvir
     resolvedata['g3rproj_l'] = resolveg3rproj
     resolvedata['g3router_l'] = resolveg3router
     resolvedata['g3fc_l'] = resolveg3fc
