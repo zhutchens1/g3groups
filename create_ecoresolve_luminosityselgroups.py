@@ -78,6 +78,8 @@ if __name__=='__main__':
     ecocz = np.array(ecodata.cz)
     ecoabsrmag = np.array(ecodata.absrmag)
     ecologmstar = np.array(ecodata.logmstar)
+    ecourcolor = np.array(ecodata.modelu_rcorr)
+    ecologmgas = np.array(ecodata.logmgas)
     ecog3grp = np.full(ecosz, -99.) # id number of g3 group
     ecog3grpn = np.full(ecosz, -99.) # multiplicity of g3 group
     ecog3grpradeg = np.full(ecosz,-99.) # ra of group center
@@ -456,7 +458,12 @@ if __name__=='__main__':
     ecog3router = fof.get_outermost_galradius(ecoradeg, ecodedeg, ecocz, ecog3grp) # in arcsec
     ecog3router[(ecog3grpngi+ecog3grpndw)==1] = 0.
     junk, ecog3vdisp = fof.get_rproj_czdisp(ecoradeg, ecodedeg, ecocz, ecog3grp)
-    ecog3rvir = ecog3rvir*206265/(ecog3grpcz/70.) 
+    ecog3rvir = ecog3rvir*206265/(ecog3grpcz/70.)
+    ecog3grpgas = ic.get_int_mass(ecologmgas, ecog3grp)
+    ecog3grpstars = ic.get_int_mass(ecologmstar, ecog3grp)
+    ecog3ADtest = vz.AD_test(ecocz, ecog3grp)
+    ecog3tcross = vz.group_crossing_time(ecoradeg, ecodedeg, ecocz, ecog3grp)
+    ecocolorgap = vz.group_color_gap(ecog3grp, ecoabsrmag, ecourcolor)
 
     outofsample = (ecog3grp==-99.)
     ecog3grpn[outofsample]=-99.
@@ -471,6 +478,13 @@ if __name__=='__main__':
     ecog3fc[outofsample]=-99.
     ecog3router[outofsample]=-99.
     ecog3vdisp[outofsample]=-99.
+    ecog3grpgas[outofsample]=-99.
+    ecog3grpstars[outofsample]=-99.
+    ecog3ADtest[outofsample]=-99.
+    ecog3tcross[outofsample]=-99.
+    ecocolorgap[outofsample]=-99.
+
+
     insample = ecog3grpn!=-99.
 
     ecodata['g3grp_l'] = ecog3grp
@@ -485,6 +499,11 @@ if __name__=='__main__':
     ecodata['g3router_l'] = ecog3router
     ecodata['g3fc_l'] = ecog3fc
     ecodata['g3vdisp_l'] = ecog3vdisp
+    ecodata['g3grplogG_l'] = ecog3grpgas
+    ecodata['g3grplogS_l'] = ecog3grpstars
+    ecodata['g3grpadAlpha_l'] = ecog3ADtest
+    ecodata['g3grptcross_l'] = ecog3tcross
+    ecodata['g3grpcolorgap_l'] = ecocolorgap
     ecodata.to_csv("ECOdata_G3catalog_luminosity.csv", index=False)    
 
     # ------ now do RESOLVE
