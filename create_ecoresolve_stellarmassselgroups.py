@@ -27,6 +27,7 @@ from scipy.optimize import curve_fit
 from center_binned_stats import center_binned_stats
 import foftools as fof
 import iterativecombination as ic
+import virtools as vz
 from smoothedbootstrap import smoothedbootstrap as sbs
 import sys
 from scipy.interpolate import UnivariateSpline
@@ -69,6 +70,8 @@ if __name__=='__main__':
     ecodedeg = np.array(ecodata.dedeg)
     ecocz = np.array(ecodata.cz)
     ecologmstar = np.array(ecodata.logmstar)
+    ecologmgas = np.array(ecodata.logmgas)
+    ecourcolor = np.array(ecodata.modelu_rcorr)
     ecog3grp = np.full(ecosz, -99.) # id number of g3 group
     ecog3grpn = np.full(ecosz, -99.) # multiplicity of g3 group
     ecog3grpradeg = np.full(ecosz,-99.) # ra of group center
@@ -85,6 +88,8 @@ if __name__=='__main__':
     resbdedeg = np.array(resolvebdata.dedeg)
     resbcz = np.array(resolvebdata.cz)
     resblogmstar = np.array(resolvebdata.logmstar)
+    resblogmgas = np.array(resolvebdata.logmgas)
+    resburcolor = np.array(resolvebdata.modelu_rcorr)
     resbg3grp = np.full(resbsz, -99.)
     resbg3grpn = np.full(resbsz, -99.)
     resbg3grpradeg = np.full(resbsz, -99.)
@@ -233,7 +238,7 @@ if __name__=='__main__':
     gdmedianrelvel, jk, jk, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelvel[binsel], np.median, bins=massbins)
     gdmedianrelvel_err, jk, jk, jk = center_binned_stats(ecogdtotalmass[binsel], ecogdrelvel[binsel], sigmarange, bins=massbins)
     nansel = np.isnan(gdmedianrproj)
-    if ADAPTIVE_OPTION:
+    if 0:
         #guess=None
         #guess=[-1,0.01,0.05,-6,0.01]
         guess=[-1,0.01,0.05]
@@ -429,6 +434,11 @@ if __name__=='__main__':
     ecog3router[(ecog3grpngi+ecog3grpndw)==1] = 0.
     junk, ecog3vdisp = fof.get_rproj_czdisp(ecoradeg, ecodedeg, ecocz, ecog3grp)
     ecog3rvir = ecog3rvir*206265/(ecog3grpcz/70.)
+    ecog3grpgas = ic.get_int_mass(ecologmgas, ecog3grp)
+    ecog3grpstars = ic.get_int_mass(ecologmstar, ecog3grp)
+    ecog3ADtest = vz.AD_test(ecocz, ecog3grp)
+    ecog3tcross = vz.group_crossing_time(ecoradeg, ecodedeg, ecocz, ecog3grp)
+    ecog3colorgap = vz.group_color_gap(ecog3grp, ecologmstar, ecourcolor)
 
     outofsample = (ecog3grp==-99.)
     ecog3grpn[outofsample]=-99.
@@ -443,6 +453,11 @@ if __name__=='__main__':
     ecog3fc[outofsample]=-99.
     ecog3router[outofsample]=-99.
     ecog3vdisp[outofsample]=-99.
+    ecog3grpgas[outofsample]=-99.
+    ecog3grpstars[outofsample]=-99.
+    ecog3ADtest[outofsample]=-99.
+    ecog3tcross[outofsample]=-99.
+    ecog3colorgap[outofsample]=-99.
     insample = ecog3grpn!=-99.
 
     ecodata['g3grp_s'] = ecog3grp
@@ -457,6 +472,11 @@ if __name__=='__main__':
     ecodata['g3router_s'] = ecog3router
     ecodata['g3fc_s'] = ecog3fc
     ecodata['g3vdisp_s'] = ecog3vdisp
+    ecodata['g3grplogG_s'] = ecog3grpgas
+    ecodata['g3grplogS_s'] = ecog3grpstars
+    ecodata['g3grpadAlpha_s'] = ecog3ADtest
+    ecodata['g3grptcross_s'] = ecog3tcross
+    ecodata['g3grpcolorgap_s'] = ecog3colorgap
     ecodata.to_csv("ECOdata_G3catalog_stellar.csv", index=False)
 
     # ------ now do RESOLVE
@@ -475,6 +495,11 @@ if __name__=='__main__':
     resolveg3fc = np.full(sz,-99.)
     resolveg3router = np.full(sz,-99.)
     resolveg3vdisp = np.full(sz,-99.)
+    resolveg3grpgas = np.full(sz, -99.)
+    resolveg3grpstars = np.full(sz, -99.)
+    resolveg3ADtest = np.full(sz, -99.)
+    resolveg3tcross = np.full(sz, -99.)
+    resolveg3colorgap = np.full(sz, -99.)
 
     resbg3grpngi = np.full(len(resbg3grp), 0)
     resbg3grpndw = np.full(len(resbg3grp), 0)
@@ -495,7 +520,11 @@ if __name__=='__main__':
     resbg3router[(resbg3grpngi+resbg3grpndw)==1] = 0.
     junk, resbg3vdisp = fof.get_rproj_czdisp(resbradeg, resbdedeg, resbcz, resbg3grp)
     resbg3rvir = resbg3rvir*206265/(resbg3grpcz/70.)
-    print(resbg3rvir)
+    resbg3grpgas = ic.get_int_mass(resblogmgas, resbg3grp)
+    resbg3grpstars = ic.get_int_mass(resblogmstar, resbg3grp)
+    resbg3ADtest = vz.AD_test(resbcz, resbg3grp)
+    resbg3tcross = vz.group_crossing_time(resbradeg, resbdedeg, resbcz, resbg3grp)
+    resbg3colorgap = vz.group_color_gap(resbg3grp, resblogmstar, resburcolor)
 
     outofsample = (resbg3grp==-99.)
     resbg3grpngi[outofsample]=-99.
@@ -510,6 +539,13 @@ if __name__=='__main__':
     resbg3router[outofsample]=-99.
     resbg3fc[outofsample]=-99.
     resbg3vdisp[outofsample]=-99.
+    resbg3grpgas[outofsample]=-99.
+    resbg3grpstars[outofsample]=-99.
+    resbg3ADtest[outofsample]=-99.
+    resbg3tcross[outofsample]=-99.
+    resbg3colorgap[outofsample]=-99.
+
+
     for i,nm in enumerate(resolvename):
         if nm.startswith('rs'):
             sel_in_eco = np.where(ecoresname==nm)
@@ -526,6 +562,11 @@ if __name__=='__main__':
             resolveg3fc[i] = ecog3fc[sel_in_eco]
             resolveg3router[i]=ecog3router[sel_in_eco]
             resolveg3vdisp[i]=ecog3vdisp[sel_in_eco]
+            resolveg3grpstars[i] = ecog3grpstars[sel_in_eco]
+            resolveg3grpgas[i] = ecog3grpgas[sel_in_eco]
+            resolveg3ADtest[i] = ecog3ADtest[sel_in_eco]
+            resolveg3tcross[i] = ecog3tcross[sel_in_eco]
+            resolveg3colorgap[i] = ecog3colorgap[sel_in_eco]
         elif nm.startswith('rf'):
             sel_in_resb = np.where(resbname==nm)
             resolveg3grp[i] = resbg3grp[sel_in_resb]
@@ -541,6 +582,11 @@ if __name__=='__main__':
             resolveg3fc[i] = resbg3fc[sel_in_resb]
             resolveg3router[i] = resbg3router[sel_in_resb]
             resolveg3vdisp[i] = resbg3vdisp[sel_in_resb]
+            resolveg3grpgas[i] = resbg3grpgas[sel_in_resb]
+            resolveg3grpstars[i] = resbg3grpstars[sel_in_resb]
+            resolveg3ADtest[i] = resbg3ADtest[sel_in_resb]
+            resolveg3tcross[i] = resbg3tcross[sel_in_resb]
+            resolveg3colorgap[i] = resbg3colorgap[sel_in_resb]
         else:
             assert False, nm+" not in RESOLVE"
 
@@ -556,4 +602,9 @@ if __name__=='__main__':
     resolvedata['g3router_s'] = resolveg3router
     resolvedata['g3fc_s'] = resolveg3fc
     resolvedata['g3vdisp_s'] = resolveg3vdisp
+    resolvedata['g3grplogG_s'] = resolveg3grpgas
+    resolvedata['g3grplogS_s'] = resolveg3grpstars
+    resolvedata['g3grpadAlpha_s'] = resolveg3ADtest
+    resolvedata['g3grptcross_s'] = resolveg3tcross
+    resolvedata['g3grpcolorgap_s'] = resolveg3colorgap
     resolvedata.to_csv("RESOLVEdata_G3catalog_stellar.csv", index=False)
