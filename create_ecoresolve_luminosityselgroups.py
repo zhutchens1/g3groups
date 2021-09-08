@@ -572,7 +572,7 @@ if __name__=='__main__':
     resbg3colorgap = vz.group_color_gap(resbg3grp, resbabsrmag, resburcolor)
     RESB_RADEG_REMAPPED = np.copy(resbradeg)
     REMAPSEL = np.where(resbradeg>18*15.)
-    RESB_RADEG_REMAPPED[sel] = resbradeg[sel]-360.
+    RESB_RADEG_REMAPPED[REMAPSEL] = resbradeg[REMAPSEL]-360.
     plt.figure()
     plt.scatter(RESB_RADEG_REMAPPED, resbdedeg)
     plt.title("check RESB RA/DEC mapping")
