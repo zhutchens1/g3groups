@@ -539,6 +539,11 @@ if __name__=='__main__':
     resolveg3ADtest = np.full(sz, -99.)
     resolveg3tcross = np.full(sz, -99.)
     resolveg3colorgap = np.full(sz, -99.)
+    resolveg3nndens = np.full(sz, -99.)
+    resolveg3edgeflag = np.full(sz, -99.)
+    resolveg3nndens2d = np.full(sz, -99.)
+    resolveg3edgeflag2d = np.full(sz, -99.)
+    resolveg3edgescale2d = np.full(sz, -99.)
 
     resbg3grpngi = np.full(len(resbg3grp), 0)
     resbg3grpndw = np.full(len(resbg3grp), 0) # was originally filled with -99 (ZH edited 7/8/21)
@@ -554,7 +559,7 @@ if __name__=='__main__':
     resbg3grpradeg, resbg3grpdedeg, resbg3grpcz = fof.group_skycoords(resbradeg, resbdedeg, resbcz, resbg3grp)
     resbg3intmag = ic.get_int_mag(resbabsrmag, resbg3grp)
     resbg3intmstar = ic.get_int_mass(resblogmstar, resbg3grp)
-    resbg3rproj = fof.get_grprproj_e17(resbradeg, resbdedeg, resbcz, resbg3grp, h=0.7) / (resbg3grpcz/70.) * 206265 # in arcsec 
+    resbg3rproj = fof.get_grprproj_e17(resbradeg, resbdedeg, resbcz, resbg3grp, h=0.7) / (resbg3grpcz/70.) * 206265 #arcsec 
     resbg3fc = fof.get_central_flag(resbabsrmag, resbg3grp)
     resbg3router = fof.get_outermost_galradius(resbradeg, resbdedeg, resbcz, resbg3grp) # in arcsec
     resbg3router[(resbg3grpngi+resbg3grpndw)==1] = 0.
@@ -565,8 +570,16 @@ if __name__=='__main__':
     resbg3ADtest = vz.AD_test(resbcz, resbg3grp)
     resbg3tcross = vz.group_crossing_time(resbradeg, resbdedeg, resbcz, resbg3grp)
     resbg3colorgap = vz.group_color_gap(resbg3grp, resbabsrmag, resburcolor)
-
-    print(resbg3rvir)  
+    RESB_RADEG_REMAPPED = np.copy(resbradeg)
+    REMAPSEL = np.where(resbradeg>18*15.)
+    RESB_RADEG_REMAPPED[sel] = resbradeg[sel]-360.
+    plt.figure()
+    plt.scatter(RESB_RADEG_REMAPPED, resbdedeg)
+    plt.title("check RESB RA/DEC mapping")
+    plt.show()
+    resbg3nndens, resbg3edgeflag, resbg3nndens2d, resbg3edgeflag2d, resbg3edgescale2d  = lss_dens_by_galaxy(resbg3grp,\
+        RESB_RADEG_REMAPPED, resbdedeg, resbcz, resbg3logmh, Nnn=3, rarange=(-2*15.,3*15.), decrange=(-1.25,1.25),\
+         czrange=(4250,7250)) # must use remapped RESOLVE-B RA because of 0/360 wraparound
 
     outofsample = (resbg3grp==-99.)
     resbg3grpngi[outofsample]=-99.
@@ -587,6 +600,11 @@ if __name__=='__main__':
     resbg3ADtest[outofsample]=-99.
     resbg3tcross[outofsample]=-99.
     resbg3colorgap[outofsample]=-99.
+    resbg3nndens[outofsample]=-99.
+    resbg3edgeflag[outofsample]=-99.
+    resbg3nndens2d[outofsample]=-99.
+    resbg3edgeflag2d[outofsample]=-99.
+    resbg3edgescale2d[outofsample]=-99.
 
     for i,nm in enumerate(resolvename):
         if nm.startswith('rs'):
@@ -610,6 +628,11 @@ if __name__=='__main__':
             resolveg3ADtest[i] = ecog3ADtest[sel_in_eco]
             resolveg3tcross[i] = ecog3tcross[sel_in_eco]
             resolveg3colorgap[i] = ecog3colorgap[sel_in_eco]
+            resolveg3nndens[i] = ecog3nndens[sel_in_eco]
+            resolveg3edgeflag[i] = ecog3edgeflag[sel_in_eco]
+            resolveg3nndens2d[i] = ecog3nndens2d[sel_in_eco]
+            resolveg3edgeflag2d[i] = ecog3edgeflag2d[sel_in_eco]
+            resolveg3edgescale2d[i] = ecog3edgescale2d[sel_in_eco]
         elif nm.startswith('rf'):
             sel_in_resb = np.where(resbname==nm)
             resolveg3grp[i] = resbg3grp[sel_in_resb]
@@ -630,7 +653,12 @@ if __name__=='__main__':
             resolveg3grpstars[i] = resbg3grpstars[sel_in_resb]
             resolveg3ADtest[i] = resbg3ADtest[sel_in_resb]
             resolveg3tcross[i] = resbg3tcross[sel_in_resb]
-            resolveg3colorgap[i] = resbg3colorgap[sel_in_resb]
+            resolveg3colorgap[i] = resbg3colorgap[sel_in_resb] 
+            resolveg3nndens[i] = resbg3nndens[sel_in_resb]
+            resolveg3edgeflag[i] = resbg3edgeflag[sel_in_resb]
+            resolveg3nndens2d[i] = resbg3nndens2d[sel_in_resb]
+            resolveg3edgeflag2d[i] = resbg3edgeflag2d[sel_in_resb]
+            resolveg3edgescale2d[i] = resbg3edgescale2d[sel_in_resb]
         else:
             assert False, nm+" not in RESOLVE"
 
@@ -653,4 +681,9 @@ if __name__=='__main__':
     resolvedata['g3grpadAlpha_l'] = resolveg3ADtest
     resolvedata['g3grptcross_l'] = resolveg3tcross
     resolvedata['g3grpcolorgap_l'] = resolveg3colorgap
+    resolvedata['g3grpnndens_l'] = resolveg3nndens
+    resolvedata['g3grpedgeflag_l'] = resolveg3edgeflag
+    resolvedata['g3grpnndens2d_l'] = resolveg3nndens2d
+    resolvedata['g3grpedgeflag2d_l'] = resolveg3edgeflag2d
+    resolvedata['g3grpedgescale2d_l'] = resolveg3edgescale2d
     resolvedata.to_csv("RESOLVEdata_G3catalog_luminosity.csv", index=False)
