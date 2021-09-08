@@ -29,6 +29,7 @@ from center_binned_stats import center_binned_stats
 import foftools as fof
 import virtools as vz
 import iterativecombination as ic
+from lss_dens import lss_dens_by_galaxy
 from smoothedbootstrap import smoothedbootstrap as sbs
 from scipy.interpolate import UnivariateSpline
 import sys
@@ -39,15 +40,11 @@ rcParams['xtick.labelsize'] = 9
 rcParams['ytick.labelsize'] = 9
 rcParams['legend.fontsize'] = 9
 rcParams['font.family'] = 'sans-serif'
-#rcParams['font.sans-serif'] = ['Helvetica']
-#rcParams['text.usetex'] = True
 rcParams['grid.color'] = 'k'
 rcParams['grid.linewidth'] = 0.2
 my_locator = MaxNLocator(6)
 singlecolsize = (3.3522420091324205, 2.0717995001590714)
 doublecolsize = (7.100005949910059, 4.3880449973709)
-
-
 
 def sigmarange(x):
     q84, q16 = np.percentile(x, [84 ,16])
@@ -466,6 +463,8 @@ if __name__=='__main__':
     ecog3ADtest = vz.AD_test(ecocz, ecog3grp)
     ecog3tcross = vz.group_crossing_time(ecoradeg, ecodedeg, ecocz, ecog3grp)
     ecog3colorgap = vz.group_color_gap(ecog3grp, ecoabsrmag, ecourcolor)
+    ecog3nndens, ecog3edgeflag, ecog3nndens2d, ecog3edgeflag2d, ecog3edgescale2d = lss_dens_by_galaxy(ecog3grp,\
+        ecoradeg, ecodedeg, ecocz, ecog3logmh, Nnn=3, rarange=(130.05,237.45), decrange=(-1,50), czrange=(2530,7470))
 
     outofsample = (ecog3grp==-99.)
     ecog3grpn[outofsample]=-99.
@@ -485,6 +484,11 @@ if __name__=='__main__':
     ecog3ADtest[outofsample]=-99.
     ecog3tcross[outofsample]=-99.
     ecog3colorgap[outofsample]=-99.
+    ecog3nndens[outofsample]=-99.
+    ecog3edgeflag[outofsample]=-99.
+    ecog3nndens2d[outofsample]=-99.
+    ecog3edgeflag2d[outofsample]=-99.
+    ecog3edgescale2d[outofsample]=-99.
 
 
     insample = ecog3grpn!=-99.
@@ -506,6 +510,11 @@ if __name__=='__main__':
     ecodata['g3grpadAlpha_l'] = ecog3ADtest
     ecodata['g3grptcross_l'] = ecog3tcross
     ecodata['g3grpcolorgap_l'] = ecog3colorgap
+    ecodata['g3grpnndens_l'] = ecog3nndens
+    ecodata['g3grpedgeflag_l'] = ecog3edgeflag
+    ecodata['g3grpnndens2d_l'] = ecog3nndens2d
+    ecodata['g3grpedgeflag2d_l'] = ecog3edgeflag2d
+    ecodata['g3grpedgescale2d_l'] = ecog3edgescale2d
     ecodata.to_csv("ECOdata_G3catalog_luminosity.csv", index=False)    
 
     # ------ now do RESOLVE
