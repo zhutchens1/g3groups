@@ -31,7 +31,8 @@ import virtools as vz
 from smoothedbootstrap import smoothedbootstrap as sbs
 import sys
 from scipy.interpolate import UnivariateSpline
-
+import virtools as vz
+from lss_dens import lss_dens_by_galaxy
 
 #def giantmodel(x, a, b, c, d):
 #    return a*np.log(np.abs(b)*x+c)+d
@@ -439,6 +440,9 @@ if __name__=='__main__':
     ecog3ADtest = vz.AD_test(ecocz, ecog3grp)
     ecog3tcross = vz.group_crossing_time(ecoradeg, ecodedeg, ecocz, ecog3grp)
     ecog3colorgap = vz.group_color_gap(ecog3grp, ecologmstar, ecourcolor)
+    ecog3dsprob = vz.fast_DS_test(ecoradeg,ecodedeg,ecocz,ecog3grp,niter=2500)
+    ecog3nndens, ecog3edgeflag, ecog3nndens2d, ecog3edgeflag2d, ecog3edgescale2d = lss_dens_by_galaxy(ecog3grp,\
+        ecoradeg, ecodedeg, ecocz, ecog3logmh, Nnn=3, rarange=(130.05,237.45), decrange=(-1,50), czrange=(2530,7470))
 
     outofsample = (ecog3grp==-99.)
     ecog3grpn[outofsample]=-99.
@@ -458,6 +462,12 @@ if __name__=='__main__':
     ecog3ADtest[outofsample]=-99.
     ecog3tcross[outofsample]=-99.
     ecog3colorgap[outofsample]=-99.
+    ecog3dsprob[outofsample]=-99.
+    ecog3nndens[outofsample]=-99.
+    ecog3edgeflag[outofsample]=-99.
+    ecog3nndens2d[outofsample]=-99.
+    ecog3edgeflag2d[outofsample]=-99.
+    ecog3edgescale2d[outofsample]=-99.
     insample = ecog3grpn!=-99.
 
     ecodata['g3grp_s'] = ecog3grp
@@ -477,6 +487,13 @@ if __name__=='__main__':
     ecodata['g3grpadAlpha_s'] = ecog3ADtest
     ecodata['g3grptcross_s'] = ecog3tcross
     ecodata['g3grpcolorgap_s'] = ecog3colorgap
+    ecodata['g3grpcolorgap_s'] = ecog3colorgap
+    ecodata['g3grpdsProb_s'] = ecog3dsprob
+    ecodata['g3grpnndens_s'] = ecog3nndens
+    ecodata['g3grpedgeflag_s'] = ecog3edgeflag
+    ecodata['g3grpnndens2d_s'] = ecog3nndens2d
+    ecodata['g3grpedgeflag2d_s'] = ecog3edgeflag2d
+    ecodata['g3grpedgescale2d_s'] = ecog3edgescale2d
     ecodata.to_csv("ECOdata_G3catalog_stellar.csv", index=False)
 
     # ------ now do RESOLVE
@@ -500,6 +517,12 @@ if __name__=='__main__':
     resolveg3ADtest = np.full(sz, -99.)
     resolveg3tcross = np.full(sz, -99.)
     resolveg3colorgap = np.full(sz, -99.)
+    resolveg3dsprob = np.full(sz,-99.)
+    resolveg3nndens = np.full(sz, -99.)
+    resolveg3edgeflag = np.full(sz, -99.)
+    resolveg3nndens2d = np.full(sz, -99.)
+    resolveg3edgeflag2d = np.full(sz, -99.)
+    resolveg3edgescale2d = np.full(sz, -99.)
 
     resbg3grpngi = np.full(len(resbg3grp), 0)
     resbg3grpndw = np.full(len(resbg3grp), 0)
@@ -525,6 +548,13 @@ if __name__=='__main__':
     resbg3ADtest = vz.AD_test(resbcz, resbg3grp)
     resbg3tcross = vz.group_crossing_time(resbradeg, resbdedeg, resbcz, resbg3grp)
     resbg3colorgap = vz.group_color_gap(resbg3grp, resblogmstar, resburcolor)
+    resbg3dsprob = vz.fast_DS_test(resbradeg,resbdedeg,resbcz,resbg3grp,niter=2500)
+    RESB_RADEG_REMAPPED = np.copy(resbradeg)
+    REMAPSEL = np.where(resbradeg>18*15.)
+    RESB_RADEG_REMAPPED[REMAPSEL] = resbradeg[REMAPSEL]-360.
+    resbg3nndens, resbg3edgeflag, resbg3nndens2d, resbg3edgeflag2d, resbg3edgescale2d  = lss_dens_by_galaxy(resbg3grp,\
+        RESB_RADEG_REMAPPED, resbdedeg, resbcz, resbg3logmh, Nnn=3, rarange=(-2*15.,3*15.), decrange=(-1.25,1.25),\
+         czrange=(4250,7250)) # must use remapped RESOLVE-B RA because of 0/360 wraparound
 
     outofsample = (resbg3grp==-99.)
     resbg3grpngi[outofsample]=-99.
@@ -544,7 +574,12 @@ if __name__=='__main__':
     resbg3ADtest[outofsample]=-99.
     resbg3tcross[outofsample]=-99.
     resbg3colorgap[outofsample]=-99.
-
+    resbg3dsprob[outofsample]=-99.
+    resbg3nndens[outofsample]=-99.
+    resbg3edgeflag[outofsample]=-99.
+    resbg3nndens2d[outofsample]=-99.
+    resbg3edgeflag2d[outofsample]=-99.
+    resbg3edgescale2d[outofsample]=-99.
 
     for i,nm in enumerate(resolvename):
         if nm.startswith('rs'):
@@ -567,6 +602,12 @@ if __name__=='__main__':
             resolveg3ADtest[i] = ecog3ADtest[sel_in_eco]
             resolveg3tcross[i] = ecog3tcross[sel_in_eco]
             resolveg3colorgap[i] = ecog3colorgap[sel_in_eco]
+            resolveg3dsprob[i] = ecog3dsprob[sel_in_eco]
+            resolveg3nndens[i] = ecog3nndens[sel_in_eco]
+            resolveg3edgeflag[i] = ecog3edgeflag[sel_in_eco]
+            resolveg3nndens2d[i] = ecog3nndens2d[sel_in_eco]
+            resolveg3edgeflag2d[i] = ecog3edgeflag2d[sel_in_eco]
+            resolveg3edgescale2d[i] = ecog3edgescale2d[sel_in_eco]
         elif nm.startswith('rf'):
             sel_in_resb = np.where(resbname==nm)
             resolveg3grp[i] = resbg3grp[sel_in_resb]
@@ -587,6 +628,12 @@ if __name__=='__main__':
             resolveg3ADtest[i] = resbg3ADtest[sel_in_resb]
             resolveg3tcross[i] = resbg3tcross[sel_in_resb]
             resolveg3colorgap[i] = resbg3colorgap[sel_in_resb]
+            resolveg3dsprob[i] = resbg3dsprob[sel_in_resb]
+            resolveg3nndens[i] = resbg3nndens[sel_in_resb]
+            resolveg3edgeflag[i] = resbg3edgeflag[sel_in_resb]
+            resolveg3nndens2d[i] = resbg3nndens2d[sel_in_resb]
+            resolveg3edgeflag2d[i] = resbg3edgeflag2d[sel_in_resb]
+            resolveg3edgescale2d[i] = resbg3edgescale2d[sel_in_resb]
         else:
             assert False, nm+" not in RESOLVE"
 
@@ -607,4 +654,10 @@ if __name__=='__main__':
     resolvedata['g3grpadAlpha_s'] = resolveg3ADtest
     resolvedata['g3grptcross_s'] = resolveg3tcross
     resolvedata['g3grpcolorgap_s'] = resolveg3colorgap
+    resolvedata['g3grpdsProb_s'] = resolveg3dsprob
+    resolvedata['g3grpnndens_s'] = resolveg3nndens
+    resolvedata['g3grpedgeflag_s'] = resolveg3edgeflag
+    resolvedata['g3grpnndens2d_s'] = resolveg3nndens2d
+    resolvedata['g3grpedgeflag2d_s'] = resolveg3edgeflag2d
+    resolvedata['g3grpedgescale2d_s'] = resolveg3edgescale2d
     resolvedata.to_csv("RESOLVEdata_G3catalog_stellar.csv", index=False)

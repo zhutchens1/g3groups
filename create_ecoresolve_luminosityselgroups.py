@@ -463,6 +463,7 @@ if __name__=='__main__':
     ecog3ADtest = vz.AD_test(ecocz, ecog3grp)
     ecog3tcross = vz.group_crossing_time(ecoradeg, ecodedeg, ecocz, ecog3grp)
     ecog3colorgap = vz.group_color_gap(ecog3grp, ecoabsrmag, ecourcolor)
+    ecog3dsprob = vz.fast_DS_test(ecoradeg,ecodedeg,ecocz,ecog3grp,niter=2500)
     ecog3nndens, ecog3edgeflag, ecog3nndens2d, ecog3edgeflag2d, ecog3edgescale2d = lss_dens_by_galaxy(ecog3grp,\
         ecoradeg, ecodedeg, ecocz, ecog3logmh, Nnn=3, rarange=(130.05,237.45), decrange=(-1,50), czrange=(2530,7470))
 
@@ -484,12 +485,12 @@ if __name__=='__main__':
     ecog3ADtest[outofsample]=-99.
     ecog3tcross[outofsample]=-99.
     ecog3colorgap[outofsample]=-99.
+    ecog3dsprob[outofsample]=-99.
     ecog3nndens[outofsample]=-99.
     ecog3edgeflag[outofsample]=-99.
     ecog3nndens2d[outofsample]=-99.
     ecog3edgeflag2d[outofsample]=-99.
     ecog3edgescale2d[outofsample]=-99.
-
 
     insample = ecog3grpn!=-99.
 
@@ -510,6 +511,7 @@ if __name__=='__main__':
     ecodata['g3grpadAlpha_l'] = ecog3ADtest
     ecodata['g3grptcross_l'] = ecog3tcross
     ecodata['g3grpcolorgap_l'] = ecog3colorgap
+    ecodata['g3grpdsProb_l'] = ecog3dsprob
     ecodata['g3grpnndens_l'] = ecog3nndens
     ecodata['g3grpedgeflag_l'] = ecog3edgeflag
     ecodata['g3grpnndens2d_l'] = ecog3nndens2d
@@ -539,6 +541,7 @@ if __name__=='__main__':
     resolveg3ADtest = np.full(sz, -99.)
     resolveg3tcross = np.full(sz, -99.)
     resolveg3colorgap = np.full(sz, -99.)
+    resolveg3dsprob = np.full(sz,-99.)
     resolveg3nndens = np.full(sz, -99.)
     resolveg3edgeflag = np.full(sz, -99.)
     resolveg3nndens2d = np.full(sz, -99.)
@@ -570,13 +573,10 @@ if __name__=='__main__':
     resbg3ADtest = vz.AD_test(resbcz, resbg3grp)
     resbg3tcross = vz.group_crossing_time(resbradeg, resbdedeg, resbcz, resbg3grp)
     resbg3colorgap = vz.group_color_gap(resbg3grp, resbabsrmag, resburcolor)
+    resbg3dsprob = vz.fast_DS_test(resbradeg,resbdedeg,resbcz,resbg3grp,niter=2500)
     RESB_RADEG_REMAPPED = np.copy(resbradeg)
     REMAPSEL = np.where(resbradeg>18*15.)
     RESB_RADEG_REMAPPED[REMAPSEL] = resbradeg[REMAPSEL]-360.
-    plt.figure()
-    plt.scatter(RESB_RADEG_REMAPPED, resbdedeg)
-    plt.title("check RESB RA/DEC mapping")
-    plt.show()
     resbg3nndens, resbg3edgeflag, resbg3nndens2d, resbg3edgeflag2d, resbg3edgescale2d  = lss_dens_by_galaxy(resbg3grp,\
         RESB_RADEG_REMAPPED, resbdedeg, resbcz, resbg3logmh, Nnn=3, rarange=(-2*15.,3*15.), decrange=(-1.25,1.25),\
          czrange=(4250,7250)) # must use remapped RESOLVE-B RA because of 0/360 wraparound
@@ -600,6 +600,7 @@ if __name__=='__main__':
     resbg3ADtest[outofsample]=-99.
     resbg3tcross[outofsample]=-99.
     resbg3colorgap[outofsample]=-99.
+    resbg3dsprob[outofsample]=-99.
     resbg3nndens[outofsample]=-99.
     resbg3edgeflag[outofsample]=-99.
     resbg3nndens2d[outofsample]=-99.
@@ -628,6 +629,7 @@ if __name__=='__main__':
             resolveg3ADtest[i] = ecog3ADtest[sel_in_eco]
             resolveg3tcross[i] = ecog3tcross[sel_in_eco]
             resolveg3colorgap[i] = ecog3colorgap[sel_in_eco]
+            resolveg3dsprob[i] = ecog3dsprob[sel_in_eco]
             resolveg3nndens[i] = ecog3nndens[sel_in_eco]
             resolveg3edgeflag[i] = ecog3edgeflag[sel_in_eco]
             resolveg3nndens2d[i] = ecog3nndens2d[sel_in_eco]
@@ -653,7 +655,8 @@ if __name__=='__main__':
             resolveg3grpstars[i] = resbg3grpstars[sel_in_resb]
             resolveg3ADtest[i] = resbg3ADtest[sel_in_resb]
             resolveg3tcross[i] = resbg3tcross[sel_in_resb]
-            resolveg3colorgap[i] = resbg3colorgap[sel_in_resb] 
+            resolveg3colorgap[i] = resbg3colorgap[sel_in_resb]
+            resolveg3dsprob[i] = resbg3dsprob[sel_in_resb] 
             resolveg3nndens[i] = resbg3nndens[sel_in_resb]
             resolveg3edgeflag[i] = resbg3edgeflag[sel_in_resb]
             resolveg3nndens2d[i] = resbg3nndens2d[sel_in_resb]
@@ -681,6 +684,7 @@ if __name__=='__main__':
     resolvedata['g3grpadAlpha_l'] = resolveg3ADtest
     resolvedata['g3grptcross_l'] = resolveg3tcross
     resolvedata['g3grpcolorgap_l'] = resolveg3colorgap
+    resolvedata['g3grpdsProb_l'] = resolveg3dsprob
     resolvedata['g3grpnndens_l'] = resolveg3nndens
     resolvedata['g3grpedgeflag_l'] = resolveg3edgeflag
     resolvedata['g3grpnndens2d_l'] = resolveg3nndens2d
