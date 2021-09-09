@@ -24,6 +24,11 @@ We provide galaxy catalogs containing group information from three group-finding
 * `g3grptcross_*`:  Crossing of time of group in Gyr, computed as the average projected spatial radius per average peculiar velocity
 * `g3grpcolorgap_*`: The u-r color gap of the group, i.e. the difference in u-r color of the central and second-most massive/luminous group member.
 * `g3grpdsProb_*`: p-value from Dressler-Schectman test for groups with N>10; low p-values are indicative of subclustering and thus lower virialization. 
+* `g3grpnndens_*`: 3D structure halo mass density from neighboring 3 groups (units log Msun/Mpc^3).
+* `g3edgeflag_*`: 1/0 flag denoting overlap with survey edges for 3D structure density.
+* `g3nndens_2d*`: 2D projected structure halo mass density from neighboring 3 groups (units log Msun/Mpc^2).
+* `g3edgeflag_2d*`: 1/0 flag denoting overlap with survey edges for 2D structure density.
+* `g3edgescale_2d*`: scalar correction factor for 2D structure densities for groups overlapping the survey edges.
 
 The wildcard `*` must be replaced with `l`, `s`, or `b` to indicate your choice of group catalog - luminosity, stellar, or baryonic selected. All variables are set to -99 if the galaxy was not included in group finding.
 
