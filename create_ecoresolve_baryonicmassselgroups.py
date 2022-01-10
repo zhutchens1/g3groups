@@ -602,6 +602,7 @@ if __name__=='__main__':
             resolveg3ADtest[i] = resbg3ADtest[sel_in_resb]
             resolveg3tcross[i] = resbg3tcross[sel_in_resb]
             resolveg3colorgap[i] = resbg3colorgap[sel_in_resb]
+            resolveg3dsprob[i] = resbg3dsprob[sel_in_resb]
             resolveg3nndens[i] = resbg3nndens[sel_in_resb]
             resolveg3edgeflag[i] = resbg3edgeflag[sel_in_resb]
             resolveg3nndens2d[i] = resbg3nndens2d[sel_in_resb]
@@ -627,6 +628,7 @@ if __name__=='__main__':
     resolvedata['g3grpadAlpha_b'] = resolveg3ADtest
     resolvedata['g3grptcross_b'] = resolveg3tcross
     resolvedata['g3grpcolorgap_b'] = resolveg3colorgap
+    resolvedata['g3grpdsProb_b'] = resolveg3dsprob
     resolvedata['g3grpnndens_b'] = resolveg3nndens
     resolvedata['g3grpedgeflag_b'] = resolveg3edgeflag
     resolvedata['g3grpnndens2d_b'] = resolveg3nndens2d
