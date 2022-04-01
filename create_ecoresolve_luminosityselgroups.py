@@ -370,7 +370,7 @@ if __name__=='__main__':
     #plt.hist(fof.multiplicity_function(ecoitassocid, return_by_galaxy=False), log=True)
     #plt.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), log=True, histtype='step')
     #plt.show()
-    
+   
     fig, (ax,ax2) = plt.subplots(figsize=(doublecolsize[0],0.6*doublecolsize[1]), ncols=2, sharey=True)
     binv = np.arange(0.5,1200.5,1)
     ax.hist(fof.multiplicity_function(ecog3grp[ecog3grp!=-99.], return_by_galaxy=False), bins=binv, log=True, label='ECO (All)', histtype='step', linewidth=3, color='green')
@@ -382,16 +382,19 @@ if __name__=='__main__':
 
     binvd=binv
     ax.hist(fof.multiplicity_function(ecoitassocid, return_by_galaxy=False), bins=binvd, log=True, histtype='stepfilled', color='palegreen', label='ECO (Dwarf-Only)')
-    ax.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), bins=binvd, log=True, histtype='stepfilled', alpha=0.5, color='gray', label='RESOLVE-B (Dwarf-Only)')
+    ax.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), bins=binvd, log=True, histtype='step', alpha=0.9, color='gray', hatch='//', label='RESOLVE-B (Dwarf-Only)')
     ax.legend(loc='best')
 
-    ax2.hist(fof.multiplicity_function(ecodata.grp[ecodata.grp>0], return_by_galaxy=False), bins=binv, log=True, label='ECO (All)', histtype='step', linewidth=3, color='green')
-    ax2.hist(fof.multiplicity_function(np.array(resolvedata.grp[(resolvedata.f_b==1)&(resolvedata.grp!=-99.)]), return_by_galaxy=False), bins=binv, log=True, label='RESOLVE-B (All)', histtype='step', color='k')
-    fofdwarfonly = ecodata[(ecodata.grp!=-99.)].groupby('grp').filter(lambda grp:(grp.absrmag>-19.4).all())
-    ax2.hist(fof.multiplicity_function(np.array(fofdwarfonly.grp), return_by_galaxy=False), bins=binvd, log=True, histtype='stepfilled', color='palegreen', label='ECO (Dwarf-Only)')
-    fofdwarfonly = resolvedata[(resolvedata.grp!=-99.)&(resolvedata.f_b==1)].groupby('grp').filter(lambda grp:(grp.absrmag>-19.4).all())
-    ax2.hist(fof.multiplicity_function(np.array(fofdwarfonly.grp), return_by_galaxy=False), bins=binvd, log=True, histtype='stepfilled', color='gray', alpha=0.5, label='RESOLVE-B (Dwarf-Only)')
-    ax2.annotate("FoF",xy=(20,10),fontsize=14)
+
+    ecodr2=pd.read_csv("ECODR2.csv")
+    ecodr2=ecodr2[ecodr2.absrmag<-17.33] 
+    ax2.hist(fof.multiplicity_function(ecodr2.grp_e17[ecodr2.grp_e17>0], return_by_galaxy=False), bins=binv, log=True, label='ECO (All)', histtype='step', linewidth=3, color='green')
+    ax2.hist(fof.multiplicity_function(np.array(resolvedata.grp_e17[(resolvedata.f_b==1)&(resolvedata.grp_e17!=-99.)]), return_by_galaxy=False), bins=binv, log=True, label='RESOLVE-B (All)', histtype='step', color='k')
+    fofdwarfonly = ecodr2[(ecodr2.grp_e17!=-99.)].groupby('grp_e17').filter(lambda grp_e17:(grp_e17.absrmag>-19.4).all())
+    ax2.hist(fof.multiplicity_function(np.array(fofdwarfonly.grp_e17), return_by_galaxy=False), bins=binvd, log=True, histtype='stepfilled', color='palegreen', label='ECO (Dwarf-Only)')
+    fofdwarfonly = resolvedata[(resolvedata.grp_e17!=-99.)&(resolvedata.f_b==1)].groupby('grp_e17').filter(lambda grp_e17:(grp_e17.absrmag>-19.4).all())
+    ax2.hist(fof.multiplicity_function(np.array(fofdwarfonly.grp_e17), return_by_galaxy=False), bins=binvd, log=True, histtype='step', color='gray', alpha=0.9, hatch='//', label='RESOLVE-B (Dwarf-Only)')
+    ax2.annotate("FoF + \nPair Splitting",xy=(15,10),fontsize=14)
     ax2.set_xlim(0,30)
     ax2.set_xlabel("Number of Group Members")
     ax2.legend(loc='best')
