@@ -160,7 +160,7 @@ if __name__=='__main__':
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
     poptrproj, jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error)#, p0=[0.1, -2, 3, -0.1])
     poptdvproj,jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error)#, p0=[160,6.5,45,-600]) 
-    rproj_boundary = lambda N: 3*giantmodel(N, *poptrproj) #3*(rprojslope*N+rprojint)
+    rproj_boundary = lambda N: 3.0*giantmodel(N, *poptrproj) #3*(rprojslope*N+rprojint)
     vproj_boundary = lambda N: 4.5*giantmodel(N, *poptdvproj) #4.5*(dvprojslope*N+dvprojint)
     print("dwarf assoc params. = ", poptrproj, poptdvproj)
     assert ((rproj_boundary(1)>0) and (vproj_boundary(1)>0)), "Cannot extrapolate Rproj or Vproj to N=1"
