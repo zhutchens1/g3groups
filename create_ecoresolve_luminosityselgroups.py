@@ -46,6 +46,9 @@ my_locator = MaxNLocator(6)
 singlecolsize = (3.3522420091324205, 2.0717995001590714)
 doublecolsize = (7.100005949910059, 4.3880449973709)
 
+import matplotlib
+matplotlib.use('TkAgg')
+
 def sigmarange(x):
     q84, q16 = np.percentile(x, [84 ,16])
     return (q84-q16)/2.
@@ -160,6 +163,7 @@ if __name__=='__main__':
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
     poptrproj, jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error)#, p0=[0.1, -2, 3, -0.1])
     poptdvproj,jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error)#, p0=[160,6.5,45,-600]) 
+    print("Giant model params.", poptrproj, poptdvproj)
     rproj_boundary = lambda N: 3.0*giantmodel(N, *poptrproj) #3*(rprojslope*N+rprojint)
     vproj_boundary = lambda N: 4.5*giantmodel(N, *poptdvproj) #4.5*(dvprojslope*N+dvprojint)
     print("dwarf assoc params. = ", poptrproj, poptdvproj)
@@ -170,15 +174,15 @@ if __name__=='__main__':
                                                                 ecovolume, inputfilename=None, outputfilename=None)
     gilogmh = np.log10(10**gilogmh) # no longer need as of 7/29 : fof.getmhoffset(280,337,1,1,6)) # convert to 337b 
     gihalorvir = (3*(10**gilogmh) / (4*np.pi*337*0.3*2.77e11) )**(1/3.)
-    gihalon = fof.multiplicity_function(np.sort(ecog3grp[ecogiantsel]), return_by_galaxy=False)
+    gihalon = np.array(fof.multiplicity_function(np.sort(ecog3grp[ecogiantsel]), return_by_galaxy=False))
     plt.figure()
     plt.plot(gihalon, gihalorvir, 'k.')
     plt.show()
 
     fig, (ax,ax1) = plt.subplots(ncols=2, figsize=doublecolsize)
     sel = (ecogiantgrpn>1)
-    ax1.plot(gihalon, gihalovdisp, 'D', label=r'ECO HAM Velocity Dispersion', rasterized=True, ms=2, markerfacecolor="None", markeredgecolor='skyblue')
-    ax1.plot(ecogiantgrpn[sel], relvel[sel], 'r.', alpha=0.2, label=r'ECO Giant Galaxies ($N_{\rm giants}<20$)', rasterized=True)
+    ax1.plot(gihalon-0.2, gihalovdisp, 'D', label=r'ECO HAM Velocity Dispersion', rasterized=True, ms=2, markerfacecolor="None", markeredgecolor='skyblue')
+    ax1.plot(ecogiantgrpn[sel]+0.1, relvel[sel], 'r.', alpha=0.2, label=r'ECO Giant Galaxies', rasterized=True)
     ax1.errorbar(uniqecogiantgrpn[keepcalsel], median_relvel, fmt='k^', label=r'$\Delta v_{\rm proj}$ (Median of $\Delta v_{\rm proj,\, gal}$)',yerr=dvproj_median_error, rasterized=True, zorder=15)
     tx = np.linspace(1,max(ecogiantgrpn),1000)
     ax1.plot(tx, giantmodel(tx, *poptdvproj), label=r'$1\Delta v_{\rm proj}^{\rm fit}$', rasterized=True, color='blue')
@@ -190,8 +194,8 @@ if __name__=='__main__':
     ax1.set_ylabel(r"Relative Velocity from Giant to Group Center [km s$^{-1}$]")
     ax1.legend(loc='best', framealpha=0.2)
 
-    ax.plot(gihalon, gihalorvir, 'D', markeredgecolor='skyblue', markerfacecolor="None", ms=2, label=r'ECO HAM Virial Radii', rasterized=True)
-    ax.plot(ecogiantgrpn[sel], relprojdist[sel], 'r.', alpha=0.2, label=r'ECO Giant Galaxies ($N_{\rm giants}<20$)', rasterized=True)
+    ax.plot(gihalon-0.1, gihalorvir, 'D', markeredgecolor='skyblue', markerfacecolor="None", ms=2, label=r'ECO HAM Virial Radii', rasterized=True)
+    ax.plot(ecogiantgrpn[sel]+0.2, relprojdist[sel], 'r.', alpha=0.2, label=r'ECO Giant Galaxies', rasterized=True)
     print("Fraction larger than association boundary Rproj, Vproj:")
     print(np.sum((relprojdist[sel]>3*giantmodel(ecogiantgrpn[sel],*poptrproj)).astype(int))/len(ecogiantgrpn[sel]))
     print(np.sum((relvel[sel]>4.5*giantmodel(ecogiantgrpn[sel],*poptdvproj)).astype(int))/len(ecogiantgrpn[sel]))
