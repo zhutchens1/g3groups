@@ -8,7 +8,33 @@ from scipy.stats import gaussian_kde
 from sklearn.neighbors import KernelDensity
 from scipy.stats import binned_statistic
 
-def logistic_skycoords(galaxyra,galaxydec,galaxycz,galaxymag,galaxygrpid,kval=10,nstar=5):
+def logistic_skycoords(galaxyra,galaxydec,galaxycz,galaxymag,galaxygrpid,kval=1,nstar=5):
+    """
+    Smoothly transition between an average group center and BCG position.
+
+    Parameters
+    ---------------------
+    galaxyra : iterable
+        RA of grouped galaxies in decimal degrees.
+    galaxydec : iterable
+        Dec of grouped galaxies in degrees.
+    galaxycz : iterable 
+        cz of grouped galaxies in km/s.
+    galaxymag : iterable
+        absolute magnitude of grouped galaxies, for selecting centrals.
+    galaxygrpid : iterable
+        Group ID numbers by galaxy (length matches `galaxyra`).
+    kval : float
+        steepness parameter for sigmoid, default 1.
+    nstar : float
+        horizontal offset for sigmoid, default 5.
+
+    Returns
+    -------------------------
+    groupra, groupdec, groupcz : np.array
+        RA, Dec, and cz of group centers in deg or km/s.
+        Length matches `galaxyra`.
+    """
     galaxyra=np.array(galaxyra)
     galaxydec=np.array(galaxydec)
     galaxycz=np.array(galaxycz)
