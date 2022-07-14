@@ -50,22 +50,26 @@ doublecolsize = (7.100005949910059, 4.3880449973709)
 import matplotlib
 matplotlib.use('TkAgg')
 
+from scipy.spatial.distance import euclidean
+def hellinger2(p, q):
+    return euclidean(np.sqrt(p), np.sqrt(q)) / np.sqrt(2)
+
 def sigmarange(x):
     q84, q16 = np.percentile(x, [84 ,16])
     return (q84-q16)/2.
 
 def giantmodel(x, a, b):
-    return np.abs(a)*np.log(np.abs(b)*x+1)
+    return np.abs(a)*np.log10(np.abs(b)*x+1)
 
-def decayexp(x, a, b, c):
-    return np.abs(a)*np.exp(-1*np.abs(b)*x + c)#+np.abs(d)
+def decayexp(x, a, b):
+    return np.abs(a)*np.exp(-1*np.abs(b)*x)#+np.abs(d)
 
 if __name__=='__main__':
     ####################################
     # Step 1: Read in obs data
     ####################################
-    ecodata = pd.read_csv("ECOdata_022521.csv")
-    resolvedata = pd.read_csv("RESOLVEdata_022521.csv")
+    ecodata = pd.read_csv("ECOliving_071122.csv")
+    resolvedata = pd.read_csv("RESOLVEliving_071122.csv")
     resolvebdata = resolvedata[resolvedata.f_b==1]
 
     ####################################
@@ -162,12 +166,12 @@ if __name__=='__main__':
 
     #rprojslope, rprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relprojdist, deg=1, w=1/rproj_median_error)
     #dvprojslope, dvprojint = np.polyfit(uniqecogiantgrpn[keepcalsel], median_relvel, deg=1, w=1/dvproj_median_error)
-    poptrproj, jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error)#, p0=[0.1, -2, 3, -0.1])
-    poptdvproj,jk = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error)#, p0=[160,6.5,45,-600]) 
+    poptrproj,cov1 = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relprojdist, sigma=rproj_median_error)#, p0=[0.1, -2, 3, -0.1])
+    poptdvproj,cov2 = curve_fit(giantmodel, uniqecogiantgrpn[keepcalsel], median_relvel, sigma=dvproj_median_error)#, p0=[160,6.5,45,-600]) 
     print("Giant model params.", poptrproj, poptdvproj)
+    print("errors: ",np.sqrt(np.diag(cov1)),np.sqrt(np.diag(cov2)))
     rproj_boundary = lambda N: 3.5*giantmodel(N, *poptrproj) #3*(rprojslope*N+rprojint)
-    vproj_boundary = lambda N: 8.5*giantmodel(N, *poptdvproj) #4.5*(dvprojslope*N+dvprojint)
-    print("dwarf assoc params. = ", poptrproj, poptdvproj)
+    vproj_boundary = lambda N: 6.5*giantmodel(N, *poptdvproj) #4.5*(dvprojslope*N+dvprojint)
     assert ((rproj_boundary(1)>0) and (vproj_boundary(1)>0)), "Cannot extrapolate Rproj or Vproj to N=1"
     
     # get virial radii from abundance matching to giant-only groups
@@ -188,13 +192,14 @@ if __name__=='__main__':
     ax1.errorbar(uniqecogiantgrpn[keepcalsel], median_relvel, fmt='k^', label=r'$\Delta v_{\rm proj}$ (Median of $\Delta v_{\rm proj,\, gal}$)',yerr=dvproj_median_error, rasterized=True, zorder=15)
     tx = np.linspace(1,max(ecogiantgrpn),1000)
     ax1.plot(tx, giantmodel(tx, *poptdvproj), label=r'$1\Delta v_{\rm proj}^{\rm fit}$', rasterized=True, color='blue')
-    ax1.plot(tx, 8.5*giantmodel(tx, *poptdvproj), 'g',  label=r'$8.5\Delta v_{\rm proj}^{\rm fit}$', linestyle='-.', rasterized=True)
+    ax1.plot(tx, 6.5*giantmodel(tx, *poptdvproj), 'g',  label=r'$6.5\Delta v_{\rm proj}^{\rm fit}$', linestyle='-.', rasterized=True)
+
     ax1.set_xlim(0,20)
-    ax1.set_ylim(0,1500)
+    ax1.set_ylim(0,850)
     ax1.set_xticks(np.arange(0,22,2))
     ax1.set_xlabel("Number of Giant Members in Galaxy Group")
     ax1.set_ylabel(r"Relative Velocity from Giant to Group Center [km s$^{-1}$]")
-    ax1.legend(loc='best', framealpha=1)
+    ax1.legend(loc='upper right', framealpha=1)
 
     ax.plot(gihalon-0.1, gihalorvir, 'D', markeredgecolor='skyblue', markerfacecolor="None", ms=2, label=r'ECO HAM Virial Radii', rasterized=True)
     ax.plot(ecogiantgrpn[sel]+0.2, relprojdist[sel], 'r.', alpha=0.2, label=r'ECO Giant Galaxies', rasterized=True)
@@ -205,7 +210,7 @@ if __name__=='__main__':
     ax.set_ylabel(r"Projected Distance from Giant to Group Center [$h^{-1}$ Mpc]")
     ax.legend(loc='best', framealpha=1)
     ax.set_xlim(0,20)
-    ax.set_ylim(0,1.5)
+    ax.set_ylim(0,0.85)
     ax.set_xticks(np.arange(0,22,2))
     plt.tight_layout()
     plt.savefig("images/rproj_calibration_assoc.jpg")
@@ -261,10 +266,12 @@ if __name__=='__main__':
     if 0: 
         guess=None
     else:
-        guess=[1e-5, 0.4, 0.2]
+        guess=[1e-5, 0.4]
     poptr, pcovr = curve_fit(decayexp, magbincenters[~nansel], gdmedianrproj[~nansel], p0=guess)
     print("guess:", poptr)
-    poptv, pcovv = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1,5e-03])#,1])
+    poptv, pcovv = curve_fit(decayexp, magbincenters[~nansel], gdmedianrelvel[~nansel], p0=[3e-5,4e-1])#,1])
+    print('dwarf only model params: ', poptr, poptv)
+    print('errors: ', np.sqrt(np.abs(np.diag(pcovr))), np.sqrt(np.abs(np.diag(pcovv))))
 
     tx = np.linspace(-27,-17,100)
     fig, (ax,ax1) = plt.subplots(ncols=2, figsize=doublecolsize)
@@ -276,8 +283,10 @@ if __name__=='__main__':
     ax.plot(ecogdtotalmag[sel_], ecogdrelprojdist[sel_], '.', color='lawngreen', alpha=0.6, label=r'ECO $N_{\rm giants}=2$ Group Galaxies', rasterized=True)
     sel_ = np.where(np.logical_and(giantgrpn>2,ecogdtotalmag>-24))
     ax.plot(ecogdtotalmag[sel_], ecogdrelprojdist[sel_], '.', color='slategrey', alpha=0.6, label=r'ECO $N_{\rm giants}\geq3$ Group Galaxies', rasterized=True)
-    ax.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='k^', label=r'Medians ($R_{\rm proj}^{\rm gi,\,dw}$)', rasterized=True, zorder=15)
+    #ax.errorbar(magbincenters, gdmedianrproj, yerr=gdmedianrproj_err, fmt='k^', label=r'Medians ($R_{\rm proj}^{\rm gi,\,dw}$)', rasterized=True, zorder=15)
+    ax.errorbar(magbincenters, gdmedianrproj, yerr=None, fmt='k^', label=r'Medians ($R_{\rm proj}^{\rm gi,\,dw}$)', rasterized=True, zorder=15)
     ax.plot(tx, 1*decayexp(tx,*poptr), label=r'$1R_{\rm proj,\,fit}^{\rm gi,\, dw}$', rasterized=True)
+    ax.plot(tx, 1*decayexp(tx,*poptr), label=r'$1R_{\rm proj,\,fit}^{\rm gi,\, dw}$', rasterized=True,linestyle='--')
     #ax.plot(tx, 3*decayexp(tx,*poptr), label=r'$3R_{\rm proj,\,fit}^{\rm gi,\, dw}$', rasterized=True)
     ax.set_xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     ax.set_ylabel(r"Projected Distance from Galaxy to Group Center [$h^{-1}$ Mpc]")
@@ -287,7 +296,8 @@ if __name__=='__main__':
     ax.invert_xaxis()
 
     #ax1.plot(ecogdtotalmag[binsel], ecogdrelvel[binsel], '.', alpha=0.6, label='ECO Giant-Hosting Group Galaxies', rasterized=True, color='palegreen')
-    ax1.errorbar(magbincenters, gdmedianrelvel, yerr=gdmedianrelvel_err, fmt='k^',label=r'Medians ($\Delta v_{\rm proj}^{\rm gi,\,dw}$)', rasterized=True, zorder=15)
+    #ax1.errorbar(magbincenters, gdmedianrelvel, yerr=gdmedianrelvel_err, fmt='k^',label=r'Medians ($\Delta v_{\rm proj}^{\rm gi,\,dw}$)', rasterized=True, zorder=15)
+    ax1.errorbar(magbincenters, gdmedianrelvel, yerr=None, fmt='k^',label=r'Medians ($\Delta v_{\rm proj}^{\rm gi,\,dw}$)', rasterized=True, zorder=15)
     sel_ = np.where(np.logical_and(giantgrpn==1,ecogdtotalmag>-24))
     ax1.plot(ecogdtotalmag[sel_], ecogdrelvel[sel_], '.', color='mediumorchid', alpha=0.6, label=r'ECO $N_{\rm giants}=1$ Group Galaxies', rasterized=True)
     sel_ = np.where(np.logical_and(giantgrpn==2,ecogdtotalmag>-24))
@@ -295,7 +305,7 @@ if __name__=='__main__':
     sel_ = np.where(np.logical_and(giantgrpn>2,ecogdtotalmag>-24))
     ax1.plot(ecogdtotalmag[sel_], ecogdrelvel[sel_], '.', color='slategrey', alpha=0.6, label=r'ECO $N_{\rm giants}\geq3$ Group Galaxies', rasterized=True)
     ax1.plot(tx, decayexp(tx, *poptv), label=r'$\Delta v_{\rm proj,\, fit}^{\rm gi,\, dw}$', rasterized=True)
-    ax1.plot(tx, 2.5*decayexp(tx, *poptv), label=r'$2.5\Delta v_{\rm proj,\, fit}^{\rm gi,\, dw}$', rasterized=True)
+    ax1.plot(tx, 2.5*decayexp(tx, *poptv), label=r'$2.5\Delta v_{\rm proj,\, fit}^{\rm gi,\, dw}$', rasterized=True, linestyle='--')
     ax1.set_ylabel(r"Relative Velocity from Galaxy to Group Center [km s$^{-1}]$")
     ax1.set_xlabel(r"Integrated $M_r$ of Giant + Dwarf Members")
     print("Fraction outside of iterative combination boundaries: ")
@@ -391,7 +401,18 @@ if __name__=='__main__':
     #plt.hist(fof.multiplicity_function(ecoitassocid, return_by_galaxy=False), log=True)
     #plt.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), log=True, histtype='step')
     #plt.show()
-   
+    ############################
+    # Multiplicity functions
+    ############################
+ 
+    # fit to G3 and show reference line for both
+    binv = np.arange(0.5,1200.5,1)
+    g3mult=np.array(fof.multiplicity_function(ecog3grp[ecog3grp!=-99.], return_by_galaxy=False))
+    g3hist, binedges = np.histogram(g3mult,bins=binv)
+    bincenters=0.5*(binedges[1:]+binedges[:-1])
+    sel=(g3hist>0)
+    g3popt, g3pcov = curve_fit(decayexp, bincenters[sel],np.log10(g3hist[sel]))
+
     fig, (ax,ax2) = plt.subplots(figsize=(doublecolsize[0],0.6*doublecolsize[1]), ncols=2, sharey=True)
     binv = np.arange(0.5,1200.5,1)
     ax.hist(fof.multiplicity_function(ecog3grp[ecog3grp!=-99.], return_by_galaxy=False), bins=binv, log=True, label='ECO (All)', histtype='step', linewidth=3, color='green')
@@ -404,6 +425,7 @@ if __name__=='__main__':
     binvd=binv
     ax.hist(fof.multiplicity_function(ecoitassocid, return_by_galaxy=False), bins=binvd, log=True, histtype='stepfilled', color='palegreen', label='ECO (Dwarf-Only)')
     ax.hist(fof.multiplicity_function(resbitassocid, return_by_galaxy=False), bins=binvd, log=True, histtype='step', alpha=0.9, color='k', hatch='//', label='RESOLVE-B (Dwarf-Only)')
+    ax.plot(binv,10**decayexp(binv,*g3popt),color='purple',label='Fit to ECO G3 Groups')
     ax.legend(loc='best')
 
 
@@ -415,20 +437,26 @@ if __name__=='__main__':
     ax2.hist(fof.multiplicity_function(np.array(fofdwarfonly.grp_e17), return_by_galaxy=False), bins=binvd, log=True, histtype='stepfilled', color='palegreen', label='ECO (Dwarf-Only)')
     fofdwarfonly = resolvedata[(resolvedata.grp_e17!=-99.)&(resolvedata.f_b==1)].groupby('grp_e17').filter(lambda grp_e17:(grp_e17.absrmag>-19.4).all())
     ax2.hist(fof.multiplicity_function(np.array(fofdwarfonly.grp_e17), return_by_galaxy=False), bins=binvd, log=True, histtype='step', color='k', alpha=0.9, hatch='//', label='RESOLVE-B (Dwarf-Only)')
-    ax2.annotate("FoF + \nPair Splitting",xy=(15,10),fontsize=14)
+    ax2.plot(binv,10**decayexp(binv,*g3popt),color='purple',label='Fit to ECO G3 Groups')
+    ax2.annotate("FoF (E17)",xy=(15,10),fontsize=14)
     ax2.set_xlim(0.5,30)
     ax2.set_xlabel("Number of Group Members")
     ax2.legend(loc='best')
     plt.tight_layout()
     plt.savefig("paper1plots/multfunc_doinset.pdf")
     plt.show()
-
+    
     print("K-S test for G3 vs. FOF E17 Mult. Functions (ECO):")
     fofmult=np.array(fof.multiplicity_function(ecodr2.grp_e17[ecodr2.grp_e17>0], return_by_galaxy=False))
     g3mult=np.array(fof.multiplicity_function(ecog3grp[ecog3grp!=-99.], return_by_galaxy=False))
     print(kstest(g3mult[g3mult>1],fofmult[fofmult>1]))
     print(kstest(g3mult[g3mult>1],fofmult[fofmult>1],'less'))
     print(kstest(g3mult[g3mult>1],fofmult[fofmult>1],'greater'))
+    print("hellinger distance: ")
+    g3hist,_ = np.histogram(g3mult,bins=binv,density=True)
+    fofhist,_ = np.histogram(fofmult,bins=binv,density=True)
+    print(hellinger2(g3hist,fofhist))
+
     ############################################################
     # Step 8: Halo Abundance Matching
     ###########################################################
